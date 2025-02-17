@@ -7,7 +7,7 @@
     
     <!-- Package Metadata -->
     <PackageId>MCPSharp</PackageId>
-    <Version>1.0.0</Version>
+    <Version>0.9.2</Version>
     <Authors>Allen Frise</Authors>
     <Company></Company>
     <Title>MCPSharp - Model Context Protocol for .NET</Title>
@@ -21,7 +21,7 @@
     <RepositoryType>git</RepositoryType>
     
     <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     
     <!-- License -->
@@ -39,11 +39,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="README.md" />
+    <PackageReference Include="StreamJsonRpc" Version="2.21.10" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="StreamJsonRpc" Version="2.21.10" />
+    <None Include="README.md" Pack="true" PackagePath="\">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties jrpc-schema_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>

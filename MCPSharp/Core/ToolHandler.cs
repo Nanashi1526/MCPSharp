@@ -6,11 +6,11 @@ using System.Text.Json;
 
 namespace MCPSharp.Core
 {
-    internal class ToolHandler<T>(Tool tool, MethodInfo method) where T : class, new()
+    internal class ToolHandler<T>(Tool tool, MethodInfo method, T instance) where T : class, new()
     {
         private readonly Tool _tool = tool;
         private readonly MethodInfo _method = method;
-
+        private readonly T _instance = instance;
         public Tool GetToolDefinition()
         {
             return new Tool
@@ -25,7 +25,7 @@ namespace MCPSharp.Core
         {
             try
             {
-                var instance = new T();
+                
                 var inputValues = new Dictionary<string, object>();
 
                 foreach (var item in parameters)
@@ -36,7 +36,7 @@ namespace MCPSharp.Core
                     }
                 }
 
-                var result = _method.Invoke(instance, [.. inputValues.Values]);
+                var result = _method.Invoke(_instance, [.. inputValues.Values]);
 
                 if (result is Task task)
                 {

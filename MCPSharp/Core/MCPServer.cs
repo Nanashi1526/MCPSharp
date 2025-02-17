@@ -113,8 +113,7 @@ namespace MCPSharp
 
         private void RegisterTool(Type type) //where T : class, new()
         {
-            //var type = typeof(T);
-
+            var instance = Activator.CreateInstance(type);
             var toolAttr = type.GetCustomAttribute<McpToolAttribute>();
             toolAttr ??= new McpToolAttribute
             {
@@ -158,9 +157,8 @@ namespace MCPSharp
                     }
                 };
 
-                var handler = new ToolHandler<object>(tool, method);
+                var handler = new ToolHandler<object>(tool, method, instance!);
                 tools[tool.Name] = handler;
-                _rpc.AddLocalRpcMethod(tool.Name, handler.HandleAsync);
             }
         }
 
