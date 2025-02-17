@@ -30,7 +30,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MCPServer\ModelContextProtocol.csproj" />
+    <ProjectReference Include="..\MCPSharp\MCPSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="i.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

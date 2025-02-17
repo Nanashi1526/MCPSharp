@@ -1,16 +1,16 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ModelContextProtocol
+namespace MCPSharp.Model.Schemas
 {
     public class ParameterSchema
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "";
+        public required string Type { get; set; }
 
         [JsonPropertyName("description")]
-        public string Description { get; set; } = "";
+        public required string Description { get; set; }
 
         [JsonPropertyName("required")]
-        public bool Required { get; set; }
+        public required bool Required { get; set; }
     }
 }

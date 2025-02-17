@@ -1,13 +1,13 @@
 ﻿using System.Reflection;
 using System.Xml.Linq;
 
-namespace ModelContextProtocol
+namespace MCPSharp
 {
     internal static class XmlDocumentationExtensions
     {
         public static string? GetXmlDocumentation(this MemberInfo member)
         {
-            try 
+            try
             {
                 var assemblyName = member.DeclaringType?.Assembly.GetName().Name;
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.xml");
@@ -17,7 +17,7 @@ namespace ModelContextProtocol
                 var doc = XDocument.Load(xmlPath);
                 var memberName = member switch
                 {
-                    MethodInfo method => $"M:{method.DeclaringType?.FullName}.{method.Name}{GetParameterString(method)}",
+                    MethodInfo method => GetMethodString(method),
                     PropertyInfo property => $"P:{property.DeclaringType?.FullName}.{property.Name}",
                     FieldInfo field => $"F:{field.DeclaringType?.FullName}.{field.Name}",
                     TypeInfo type => $"T:{type.FullName}",
@@ -30,11 +30,10 @@ namespace ModelContextProtocol
             }
             catch
             {
-                return null; // Fail gracefully if XML docs can't be loaded
+                return null;
             }
         }
 
-        
         public static string? GetXmlDocumentation(this ParameterInfo parameter)
         {
             try
@@ -48,13 +47,8 @@ namespace ModelContextProtocol
                 var method = parameter.Member as MethodInfo;
                 if (method == null) return null;
 
-                var memberName = $"M:{method.DeclaringType?.FullName}.{method.Name}{GetParameterString(method)}";
-                var paramName = parameter.Name;
-
-                return doc.Descendants("member")
-                         .FirstOrDefault(m => m.Attribute("name")?.Value == memberName)
-                         ?.Elements("param")
-                         .FirstOrDefault(p => p.Attribute("name")?.Value == paramName)
+                return doc.Descendants("member").FirstOrDefault(m => m.Attribute("name")?.Value == GetMethodString(method))
+                         ?.Elements("param").FirstOrDefault(p => p.Attribute("name")?.Value == parameter.Name)
                          ?.Value.Trim();
             }
             catch
@@ -63,12 +57,8 @@ namespace ModelContextProtocol
             }
         }
 
-        private static string GetParameterString(MethodInfo method)
-        {
-            if (method.GetParameters().Length == 0) return string.Empty;
-            
-            return "(" + string.Join(",", method.GetParameters().Select(p => p.ParameterType.FullName)) + ")";
-        }
-
+        private static string GetMethodString(MethodInfo method) => $"M:{method.DeclaringType?.FullName}.{method.Name}{GetParameterString(method)}";
+        private static string GetParameterString(MethodInfo method) => method.GetParameters().Length == 0
+                    ? string.Empty : "(" + string.Join(",", method.GetParameters().Select(p => p.ParameterType.FullName)) + ")";
     }
 }

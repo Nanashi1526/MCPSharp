@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Package Metadata -->
+    <PackageId>MCPSharp</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Allen Frise</Authors>
+    <Company></Company>
+    <Title>MCPSharp - Model Context Protocol for .NET</Title>
+    <Description>Build Model Context Protocol (MCP) servers in .NET with MCPSharp. Create MCP-compliant tools and functions that AI models can discover and use. Features attribute-based API, automatic documentation generation, and seamless JSON-RPC communication.</Description>
+    
+    <!-- Package Tags -->
+    <PackageTags>mcp;ai;machine-learning;json-rpc;api;tools;claude;anthropic;model-context-protocol;tool-calling</PackageTags>
+    
+    <!-- Repository Info -->
+    <RepositoryUrl>https://github.com/afrise/MCPSharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    
+    <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- License -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <!-- Project URL -->
+    <PackageProjectUrl>https://github.com/afrise/MCPSharp</PackageProjectUrl>
+    
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DynamicClassGenerator.cs" />
+    <Compile Remove="McpSerializerContext.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StreamJsonRpc" Version="2.21.10" />
+  </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties jrpc-schema_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
+</Project>

@@ -1,4 +1,4 @@
-﻿namespace ModelContextProtocol
+﻿namespace MCPSharp
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class McpToolAttribute : Attribute
@@ -13,4 +13,3 @@
         }
     }
 }
- 
