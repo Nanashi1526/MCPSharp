@@ -8,19 +8,10 @@ namespace MCPSharp.Core
 {
     internal class ToolHandler<T>(Tool tool, MethodInfo method, T instance) where T : class, new()
     {
-        private readonly Tool _tool = tool;
+        public Tool Tool = tool;
         private readonly MethodInfo _method = method;
         private readonly T _instance = instance;
-        public Tool GetToolDefinition()
-        {
-            return new Tool
-            {
-                Name = _tool.Name,
-                Description = _tool.Description,
-                InputSchema = _tool.InputSchema
-            };
-        }
-
+       
         public async Task<CallToolResult> HandleAsync(Dictionary<string, object> parameters, CancellationToken cancellationToken = default)
         {
             try
@@ -60,11 +51,11 @@ namespace MCPSharp.Core
                 return new CallToolResult
                 {
                     IsError = true,
-                    Content = new[]
-                    {
+                    Content =
+                    [
                         new TextContent { Text = $"{e.Message}" },
                         new TextContent { Text = $"StackTrace:\n{string.Join("\n", stackTrace)}" }
-                    }
+                    ]
                 };
             }
         }

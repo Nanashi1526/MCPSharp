@@ -1,4 +1,5 @@
-﻿using MCPSharp.Core;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+using MCPSharp.Core;
 using MCPSharp.Model;
 using MCPSharp.Model.Capabilities;
 using MCPSharp.Model.Content;
@@ -11,48 +12,57 @@ using System.Reflection;
 
 namespace MCPSharp
 {
-    class DuplexPipe : IDuplexPipe 
+    internal class DuplexPipe(PipeReader reader, PipeWriter writer) : IDuplexPipe
     {
-        private readonly PipeReader _reader;
-        private readonly PipeWriter _writer;
-        public DuplexPipe(PipeReader reader, PipeWriter writer) 
-        {
-            var r = PipeReader.Create(Console.OpenStandardInput());
-            _reader = reader;
-            _writer = writer;
-        }
+        private readonly PipeReader _reader = reader;
+        private readonly PipeWriter _writer = writer;
+
         public PipeReader Input => _reader;
         public PipeWriter Output => _writer;
     }
     /// <summary>
     /// Main class for the MCP server.
     /// </summary>
-    public partial class MCPServer 
+    public class MCPServer
     {
         private readonly Dictionary<string, ToolHandler<object>> tools = [];
         private readonly JsonRpc _rpc;
-        private Implementation implementation;
+        private readonly Implementation implementation;
+        private readonly Stream StandardOutput;
+
+        /// <summary>
+        /// The output of Console.WriteLine() will be redirected here. Defaults to null, currently no way to change this. 
+        /// </summary>
+        public readonly TextWriter RedirectedOutput = TextWriter.Null;
 
         /// <summary>
         /// Constructor for the MCP server.
         /// </summary>
         public MCPServer()
         {
-            var pipe = new DuplexPipe(PipeReader.Create(Console.OpenStandardInput()), PipeWriter.Create(Console.OpenStandardOutput())); 
+            StandardOutput = Console.OpenStandardOutput();
+            Console.SetOut(RedirectedOutput);
+            var pipe = new DuplexPipe(PipeReader.Create(Console.OpenStandardInput()), PipeWriter.Create(StandardOutput));
             _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
         }
 
-        
+        public MCPServer(Implementation implementation) : this() => this.implementation = implementation;
+
+        /// <summary>
+        /// Constructor for the MCP server.
+        /// </summary>
+        /// <param name="outputWriter">a TextWriter object where any Console.Write() calls will go</param>
+        public MCPServer(TextWriter outputWriter) : this() => RedirectedOutput = outputWriter; 
+
         /// <summary>
         /// Starts the MCP Server, Registers all tools and starts listening for requests.
         /// </summary>
         /// <returns></returns>
         public static async Task StartAsync(string serverName, string version)
         {
-            var server = new MCPServer
-            {
-                implementation = new Implementation { Name = serverName, Version = version }
-            };
+
+            var server = new MCPServer(new Implementation(serverName, version));
+            
 
             foreach (var toolType in Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.GetCustomAttribute<McpToolAttribute>() != null))
             {
@@ -65,65 +75,31 @@ namespace MCPSharp
             await Task.Delay(-1);
         }
 
-        /// <summary>
-        /// Initializes the MCP server. This is called by the client
-        /// </summary>
-        /// <param name="protocolVersion"></param>
-        /// <param name="capabilities"></param>
-        /// <param name="clientInfo"></param>
-        /// <returns></returns>
-        [JsonRpcMethod("initialize")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "<Pending>")]
-        public InitializeResult Initialize(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo)
-        {
-            return new InitializeResult { 
-                ProtocolVersion = protocolVersion, 
-                Capabilities = new ServerCapabilities
-                { 
-                    Tools = new() {{"listChaged", false}}, 
-                    Resources = [], 
-                    Prompts = [], 
-                    Sampling = [],
-                    Roots = []
-                },
-                ServerInfo = implementation
-            };
-        }
-
+        [JsonRpcMethod("initialize")] 
+        public InitializeResult Initialize(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo) => new (protocolVersion, new ServerCapabilities { Tools = new() { { "listChaged", false } } }, implementation);
+        
         [JsonRpcMethod("notifications/initialized")]
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static void Initialized(){ }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        public static async Task InitializedAsync() => await Task.Run(() => { });
+        
+        [JsonRpcMethod("resources/list")] 
+        public async Task<ResourcesListResult> ListResourcesAsync() => await Task.Run(()=>new ResourcesListResult());
+        
+        [JsonRpcMethod("resources/templates/list")] 
+        public async Task<ResourceTemplateListResult> ListResourceTemplatesAsync() => await Task.Run(() => new ResourceTemplateListResult());
+        
+        [JsonRpcMethod("tools/call", UseSingleObjectParameterDeserialization = true)] 
+        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters) => !tools.TryGetValue(parameters.Name, out var toolHandler) ? new CallToolResult { IsError = true, Content = [new TextContent { Text = $"Tool {parameters.Name} not found" }] } : await toolHandler.HandleAsync(parameters.Arguments);
+        
+        [JsonRpcMethod("tools/list")] 
+        public async Task<ToolsListResult> ListToolsAsync() => await Task.Run(()=>new ToolsListResult(tools.Values.Select(t => t.Tool).ToList()));
 
+        [JsonRpcMethod("ping")]
+        public async Task<object> PingAsync() => await Task.Run(() => new { });
 
-        [JsonRpcMethod("tools/list")]
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public ToolsListResult ListTools()
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        {
-            var toolsList = tools.Values.Select(t => t.GetToolDefinition()).ToList();
-            return new ToolsListResult { Tools = toolsList };
-        }
+        [JsonRpcMethod("prompts/list")]
+        public async Task<object> ListPromptsAsync() => await Task.Run(() => new { prompts=new List<string>() });
 
-
-        [JsonRpcMethod("tools/call", UseSingleObjectParameterDeserialization = true)]
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters)
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        {
-
-            if (!tools.TryGetValue(parameters.Name, out var toolHandler))
-            {
-                //Log.Error($"Tool {parameters.Name} not found");
-                return new CallToolResult { IsError = true, Content = [new TextContent { Text = $"Tool {parameters.Name} not found" }] };
-
-            }
-
-            return await toolHandler.HandleAsync(parameters.Arguments);
-        }
-
-
-        private void RegisterTool(Type type) //where T : class, new()
+        private void RegisterTool(Type type)
         {
             var instance = Activator.CreateInstance(type);
             var toolAttr = type.GetCustomAttribute<McpToolAttribute>();
@@ -146,14 +122,16 @@ namespace MCPSharp
                     p => p.Name!,
                     p => new ParameterSchema
                     {
-                        Type = p.ParameterType switch {
+                        Type = p.ParameterType switch
+                        {
                             Type t when t == typeof(string) => "string",
                             Type t when t == typeof(int) || t == typeof(double) || t == typeof(float) => "number",
                             Type t when t == typeof(bool) => "boolean",
                             Type t when t.IsArray => "array",
                             Type t when t == typeof(DateTime) => "string",
-                            _ => "object"},
-                        Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<McpParameterAttribute>()?.Description ?? "description not set",
+                            _ => "object"
+                        },
+                        Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<McpParameterAttribute>()?.Description ?? "",
                         Required = p.GetCustomAttribute<McpParameterAttribute>()?.Required ?? false,
                     }
                 );
@@ -174,6 +152,6 @@ namespace MCPSharp
             }
         }
 
-        private void Start()=>_rpc.StartListening();   
+        private void Start() => _rpc.StartListening();
     }
 }
