@@ -43,7 +43,7 @@ namespace MCPSharp
                 }
             };
             _process.Start();
-            var pipe = new DuplexPipe(PipeReader.Create(_process.StandardOutput.BaseStream), PipeWriter.Create(_process.StandardInput.BaseStream));
+            var pipe = new DuplexPipe(_process.StandardOutput.BaseStream, _process.StandardInput.BaseStream);
             _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
             _rpc.StartListening();
             _ = _rpc.InvokeAsync<InitializeResult>("initialize", ["2024-11-05", new { roots = new { listChanged = false }, sampling = new { } }, new { name = _name, version = _version }]);
@@ -68,15 +68,14 @@ namespace MCPSharp
         /// <param name="parameters">The parameters to pass to the tool.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the result of the tool call.</returns>
         public async Task<CallToolResult> CallToolAsync(string name, Dictionary<string, object> parameters) =>
-            await _rpc.InvokeWithParameterObjectAsync<CallToolResult>("tools/call", new ToolCallParameters { Arguments = parameters, Name = name, Meta = new MetaData() });
+            await _rpc.InvokeWithParameterObjectAsync<CallToolResult>("tools/call", new ToolCallParameters { Arguments = parameters, Name = name });
 
         /// <summary>
         /// Calls a tool with the given name.
         /// </summary>
         /// <param name="name">The name of the tool to call.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the result of the tool call.</returns>
-        public async Task<CallToolResult> CallToolAsync(string name) =>
-            await _rpc.InvokeWithParameterObjectAsync<CallToolResult>("tools/call", new ToolCallParameters { Name = name, Arguments = [], Meta = new() });
+        public async Task<CallToolResult> CallToolAsync(string name) => await CallToolAsync(name, []);
 
         /// <summary>
         /// Gets a list of resources from the MCP server.

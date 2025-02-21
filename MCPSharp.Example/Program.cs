@@ -1,7 +1,8 @@
 ﻿using MCPSharp;
+using MCPSharp.ExternalExample;
 
+MCPServer.RegisterTool<ExternalTool>(); 
 await MCPServer.StartAsync("TestServer", "1.0");
-
 
 namespace MCPSharp.Example
 {

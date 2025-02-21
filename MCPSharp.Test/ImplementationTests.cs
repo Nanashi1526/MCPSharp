@@ -19,6 +19,8 @@
             {
                 Assert.IsFalse(string.IsNullOrEmpty(tool.Name));
                 Assert.IsFalse(string.IsNullOrEmpty(tool.Description));
+
+                Console.WriteLine(tool.Name);
             });
         }
 
@@ -62,6 +64,14 @@
         {
             var result = await client.CallToolAsync("Echo", new Dictionary<string, object> { { "invalid_param", "test" } });
             Assert.IsTrue(result.IsError);
+        }
+
+        [TestMethod("Test tool loaded from dll")] 
+        public async Task TestCallExternalTool()
+        {
+            var result = await client.CallToolAsync("dll-tool");
+            string response = result.Content[0].Text;
+            Assert.AreEqual("success", response);
         }
 
         [TestMethod("List Resources")]

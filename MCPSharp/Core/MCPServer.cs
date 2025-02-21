@@ -12,10 +12,10 @@ using System.Reflection;
 
 namespace MCPSharp
 {
-    internal class DuplexPipe(PipeReader reader, PipeWriter writer) : IDuplexPipe
+    internal class DuplexPipe(Stream reader, Stream writer) : IDuplexPipe
     {
-        private readonly PipeReader _reader = reader;
-        private readonly PipeWriter _writer = writer;
+        private readonly PipeReader _reader = PipeReader.Create(reader);
+        private readonly PipeWriter _writer = PipeWriter.Create(writer);
 
         public PipeReader Input => _reader;
         public PipeWriter Output => _writer;
@@ -25,10 +25,10 @@ namespace MCPSharp
     /// </summary>
     public class MCPServer
     {
-        private static MCPServer _instance;
+        private static readonly MCPServer _instance = new();
         private readonly Dictionary<string, ToolHandler<object>> tools = [];
         private readonly JsonRpc _rpc;
-        private readonly Implementation implementation;
+        public Implementation Implementation; 
         private readonly Stream StandardOutput;
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace MCPSharp
         {
             StandardOutput = Console.OpenStandardOutput();
             Console.SetOut(RedirectedOutput);
-            var pipe = new DuplexPipe(PipeReader.Create(Console.OpenStandardInput()), PipeWriter.Create(StandardOutput));
+            var pipe = new DuplexPipe(Console.OpenStandardInput(), StandardOutput);
             _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
         }
       
@@ -51,7 +51,7 @@ namespace MCPSharp
         /// Constructor for the MCP server with implementation details.
         /// </summary>
         /// <param name="implementation">The implementation details of the server.</param>
-        public MCPServer(Implementation implementation) : this() => this.implementation = implementation;
+        public MCPServer(Implementation implementation) : this() => Implementation = implementation; 
 
         /// <summary>
         /// Constructor for the MCP server with output redirection.
@@ -67,8 +67,7 @@ namespace MCPSharp
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task StartAsync(string serverName, string version)
         {
-            _instance = new MCPServer(new Implementation(serverName, version));
-
+            _instance.Implementation = new (serverName, version);
 
             foreach (var toolType in Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.GetCustomAttribute<McpToolAttribute>() != null))
             {
@@ -90,7 +89,7 @@ namespace MCPSharp
         /// <param name="clientInfo">The client information.</param>
         /// <returns>The result of the initialization process.</returns>
         [JsonRpcMethod("initialize")]
-        public InitializeResult Initialize(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo) => new(protocolVersion, new ServerCapabilities { Tools = new() { { "listChanged", false } } }, implementation);
+        public InitializeResult Initialize(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo) => new(protocolVersion, new ServerCapabilities { Tools = new() { { "listChanged", false } } }, Implementation); 
 
         /// <summary>
         /// Handles the "notifications/initialized" JSON-RPC method.
@@ -145,7 +144,7 @@ namespace MCPSharp
         /// <summary>
         /// Registers a tool with the server.
         /// </summary>
-        /// <param name="type">The type of the tool to register.</param>
+        public static void RegisterTool<T>() where T : class, new() => _instance.RegisterTool(typeof(T));
 
         private void RegisterTool(Type type)
         {
@@ -165,8 +164,7 @@ namespace MCPSharp
                 methodAttr.Name ??= method.Name;
                 methodAttr.Description ??= method.GetXmlDocumentation();
 
-                var parameters = method.GetParameters();
-                var parameterSchemas = parameters.ToDictionary(
+                var parameterSchemas = method.GetParameters().ToDictionary(
                     p => p.Name!,
                     p => new ParameterSchema
                     {
@@ -184,7 +182,7 @@ namespace MCPSharp
                     }
                 );
 
-                var tool = new Tool
+                _instance.tools[methodAttr.Name] = new ToolHandler<object>(new Tool
                 {
                     Name = methodAttr.Name,
                     Description = methodAttr.Description ?? "",
@@ -193,17 +191,13 @@ namespace MCPSharp
                         Properties = parameterSchemas,
                         Required = [.. parameterSchemas.Where(kvp => kvp.Value.Required).Select(kvp => kvp.Key)],
                     }
-                };
-
-                var handler = new ToolHandler<object>(tool, method, instance!);
-                tools[tool.Name] = handler;
+                }, method, instance!);
             }
         }
-
 
         /// <summary>
         /// Starts the JSON-RPC listener.
         /// </summary>
-        private void Start() => _rpc.StartListening();
+        public void Start() => _rpc.StartListening();
     }
 }

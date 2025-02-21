@@ -30,6 +30,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MCPSharp.ExternalExample\MCPSharp.ExternalExample.csproj" />
     <ProjectReference Include="..\MCPSharp\MCPSharp.csproj" />
   </ItemGroup>
 
