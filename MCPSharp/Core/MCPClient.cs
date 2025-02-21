@@ -16,7 +16,11 @@ namespace MCPSharp
         private readonly string _version;
         private readonly Process _process;
         private readonly JsonRpc _rpc;
-        private List<Tool> _tools;
+
+        /// <summary>
+        /// The tools that have been registered with the client.
+        /// </summary>
+        public List<Tool> Tools { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MCPClient"/> class.
@@ -46,7 +50,19 @@ namespace MCPSharp
             var pipe = new DuplexPipe(_process.StandardOutput.BaseStream, _process.StandardInput.BaseStream);
             _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
             _rpc.StartListening();
-            _ = _rpc.InvokeAsync<InitializeResult>("initialize", ["2024-11-05", new { roots = new { listChanged = false }, sampling = new { } }, new { name = _name, version = _version }]);
+
+            _ = _rpc.InvokeAsync<InitializeResult>(
+                    "initialize", 
+                    [
+                        "2024-11-05", 
+                        new { 
+                            roots = new { listChanged = false }, 
+                            sampling = new { } }, 
+                        new { 
+                            name = _name, 
+                            version = _version }
+                    ]);
+
             _ = _rpc.NotifyAsync("notifications/initialized");
             _ = GetToolsAsync();
         }
@@ -57,10 +73,10 @@ namespace MCPSharp
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of tools.</returns>
         public async Task<List<Tool>> GetToolsAsync()
         {
-            _tools = (await _rpc.InvokeAsync<ToolsListResult>("tools/list")).Tools;
-            return _tools;
+            Tools = (await _rpc.InvokeAsync<ToolsListResult>("tools/list")).Tools;
+            return Tools; 
         }
-
+        
         /// <summary>
         /// Calls a tool with the given name and parameters.
         /// </summary>

@@ -6,11 +6,11 @@ using System.Text.Json;
 
 namespace MCPSharp.Core
 {
-    internal class ToolHandler<T>(Tool tool, MethodInfo method, T instance) where T : class, new()
+    internal class ToolHandler<T>(Tool tool, MethodInfo method) where T : class, new()
     {
         public Tool Tool = tool;
         private readonly MethodInfo _method = method;
-        private readonly T _instance = instance;
+        private readonly T _instance = new(); 
        
         public async Task<CallToolResult> HandleAsync(Dictionary<string, object> parameters, CancellationToken cancellationToken = default)
         {

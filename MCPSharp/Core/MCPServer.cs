@@ -26,7 +26,7 @@ namespace MCPSharp
     public class MCPServer
     {
         private static readonly MCPServer _instance = new();
-        private readonly Dictionary<string, ToolHandler<object>> tools = [];
+        private readonly Dictionary<string, ToolHandler<object>> tools = []; 
         private readonly JsonRpc _rpc;
         public Implementation Implementation; 
         private readonly Stream StandardOutput;
@@ -71,7 +71,8 @@ namespace MCPSharp
 
             foreach (var toolType in Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.GetCustomAttribute<McpToolAttribute>() != null))
             {
-                _instance.RegisterTool(toolType);
+                //_instance.RegisterTool(toolType);
+
                 var registerMethod = typeof(MCPServer).GetMethod(nameof(RegisterTool))?.MakeGenericMethod(toolType);
                 registerMethod?.Invoke(_instance, null);
             }
@@ -144,17 +145,10 @@ namespace MCPSharp
         /// <summary>
         /// Registers a tool with the server.
         /// </summary>
-        public static void RegisterTool<T>() where T : class, new() => _instance.RegisterTool(typeof(T));
-
-        private void RegisterTool(Type type)
+        public static void RegisterTool<T>() where T : class, new()
         {
-            var instance = Activator.CreateInstance(type);
-            var toolAttr = type.GetCustomAttribute<McpToolAttribute>();
-            toolAttr ??= new McpToolAttribute
-            {
-                Name = type.Name,
-                Description = type.GetXmlDocumentation()
-            };
+            var type = typeof(T);
+            var toolAttr = type.GetCustomAttribute<McpToolAttribute>() ?? new McpToolAttribute { Name = type.Name, Description = type.GetXmlDocumentation() };
 
             foreach (var method in type.GetMethods())
             {
@@ -182,7 +176,7 @@ namespace MCPSharp
                     }
                 );
 
-                _instance.tools[methodAttr.Name] = new ToolHandler<object>(new Tool
+                _instance.tools[methodAttr.Name] = new ToolHandler<object>(new Tool 
                 {
                     Name = methodAttr.Name,
                     Description = methodAttr.Description ?? "",
@@ -191,7 +185,7 @@ namespace MCPSharp
                         Properties = parameterSchemas,
                         Required = [.. parameterSchemas.Where(kvp => kvp.Value.Required).Select(kvp => kvp.Key)],
                     }
-                }, method, instance!);
+                }, method!);
             }
         }
 
