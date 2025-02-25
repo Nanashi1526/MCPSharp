@@ -168,7 +168,7 @@ namespace MCPSharp
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the list of tools.</returns>
         [JsonRpcMethod("tools/list")]
-        public async Task<ToolsListResult> ListToolsAsync(object parameters) => 
+        public async Task<ToolsListResult> ListToolsAsync(object parameters = null) => 
             await Task.Run(() => new ToolsListResult(tools.Values.Select(t => t.Tool).ToList()));
 
         /// <summary>

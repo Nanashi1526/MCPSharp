@@ -97,6 +97,7 @@ namespace MCPSharp
             //Console.WriteLine(result.Result.ServerInfo.Name);
 
             _ = _rpc.NotifyAsync("notifications/initialized");
+            Initialized = true;
         }
         /// <summary>
         /// resets the connection to an SSE connection 
@@ -104,7 +105,7 @@ namespace MCPSharp
         /// <param name="address"></param>
         /// <param name="port"></param>
         /// <returns></returns>
-        public async Task InitiateSseAsync(string address = "localhost", int port = 8080)
+        public async Task InitializeSseAsync(string address = "localhost", int port = 8080)
         {
 
             _httpClient?.Dispose();
@@ -143,7 +144,7 @@ namespace MCPSharp
                  ]);
 
             _ = _rpc.NotifyAsync("notifications/initialized");
-
+            Initialized = true;
         }
 
         /// <summary>
@@ -152,8 +153,8 @@ namespace MCPSharp
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of tools.</returns>
         public async Task<List<Tool>> GetToolsAsync()
         {
-            _tools = (await _rpc.InvokeWithParameterObjectAsync<ToolsListResult>("tools/list")).Tools;
-            return _tools;
+            Tools = (await _rpc.InvokeWithParameterObjectAsync<ToolsListResult>("tools/list")).Tools;
+            return Tools;
         }
         
         /// <summary>

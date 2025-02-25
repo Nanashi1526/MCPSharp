@@ -17,12 +17,12 @@ namespace MCPSharp.Model.Schemas
         /// Gets or sets the description of the parameter.
         /// </summary>
         [JsonPropertyName("description")]
-        public required string Description { get; set; }
+        public string Description { get; set; } = "";
 
         /// <summary>
         /// Gets or sets a value indicating whether the parameter is required.
         /// </summary>
         [JsonPropertyName("required")]
-        public required bool Required { get; set; }
+        public bool Required { get; set; } = false;
     }
 }
