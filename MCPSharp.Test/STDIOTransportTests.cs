@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2.HPack;
+﻿using MCPSharp.Example;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2.HPack;
 
 namespace MCPSharp.Test
 {
@@ -54,7 +55,7 @@ namespace MCPSharp.Test
             Assert.AreEqual("this is a test of the echo function", response);
         }
 
-        [TestCategory("Tools")]
+        [TestCategory("Misc")]
         [TestMethod("Exception Handling")]
         public async Task TestException()
         {
@@ -78,6 +79,7 @@ namespace MCPSharp.Test
             Assert.IsTrue(result.IsError);
         }
 
+        [TestCategory("Tools")]
         [TestMethod("Tools/Call with dll tool")] 
         public async Task TestCallExternalTool()
         {
@@ -87,19 +89,22 @@ namespace MCPSharp.Test
         }
 
 
-        [TestMethod("List Prompts")]
+        [TestCategory("Prompts")]
+        [TestMethod("Prompts/List")]
         public async Task TestListPrompts()
         {
             var result = await client.GetPromptListAsync();
             Assert.IsFalse(result.Prompts.Count != 0);
         }
 
+        [TestCategory("Misc")]
         [TestMethod("Test Ping")]
         public async Task TestPing()
         {
             await client.PingAsync();
         }
 
+        [TestCategory("Resources")]
         [TestMethod("Resources/List")]
         public async Task TestResources()
         {
@@ -110,5 +115,14 @@ namespace MCPSharp.Test
                 Console.WriteLine(result.Name);
             });
         }
+
+        [TestCategory("Tools")]
+        [TestMethod("Tools/Call with parameter obj")]
+        public async Task TestCallToolWithParameterObject()
+        {
+            var result = await client.CallToolAsync("AddComplex", new Dictionary<string, object> { { "obj", new ComplicatedObject { Name = "Claude", Age = 25, Hobbies = ["Programming", "Gaming"] } } });
+            string response = result.Content[0].Text;
+            Assert.AreEqual("Name: Claude, Age: 25, Hobbies: Programming, Gaming", response);
+        }   
     }
 }

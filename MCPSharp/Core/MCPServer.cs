@@ -2,20 +2,16 @@
 using MCPSharp.Model.Capabilities;
 using MCPSharp.Model.Parameters;
 using MCPSharp.Model.Results;
-using MCPSharp.Model.Schemas;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using StreamJsonRpc;
 using System.Reflection;
 using MCPSharp.Core.Transport.SSE;
-using MCPSharp.Core.Tools;
 using MCPSharp.Core.Transport;
-using Microsoft.SemanticKernel;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
+
 using System.Text;
+using MCPSharp.Core.Tools;
 
 namespace MCPSharp
 {
@@ -25,11 +21,10 @@ namespace MCPSharp
     public class MCPServer
     {
         private static readonly MCPServer _instance = new();
-        internal Dictionary<string, ToolHandler<object>> tools = new(); 
-        private readonly List<Resource> resources = new();
         private readonly JsonRpc _rpc;
         private readonly Stream StandardOutput;
         private readonly ServerSentEventsService _sseService;
+        private readonly ToolManager _toolManager = new();
 
         /// <summary>
         /// The implementation details of the server.
@@ -53,6 +48,14 @@ namespace MCPSharp
             _sseService = new ServerSentEventsService(CreateSseInstance);
         }
 
+        /// <summary>
+        /// Registers a tool with the server.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public static void RegisterTool<T>() where T : class, new()
+        {
+            _instance._toolManager.RegisterTool<T>();
+        }
         // Factory method to create new instances for SSE clients
         private static MCPServer CreateSseInstance(Stream input, Stream output)
         {
@@ -115,7 +118,7 @@ namespace MCPSharp
 
             foreach (var toolType in Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.GetCustomAttribute<McpToolAttribute>() != null))
             {
-                var registerMethod = typeof(MCPServer).GetMethod(nameof(RegisterTool))?.MakeGenericMethod(toolType);
+                var registerMethod = typeof(MCPServer).GetMethod(nameof(ToolManager.RegisterTool))?.MakeGenericMethod(toolType);
                 registerMethod?.Invoke(_instance, null);
             }
 
@@ -146,7 +149,7 @@ namespace MCPSharp
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the list of resources.</returns>
         [JsonRpcMethod("resources/list")]
-        public async Task<ResourcesListResult> ListResourcesAsync() => await Task.Run(() => new ResourcesListResult() { Resources=resources});
+        public async Task<ResourcesListResult> ListResourcesAsync() => await Task.Run(() => new ResourcesListResult() { Resources=_toolManager.Resources});
 
         /// <summary>
         /// Lists the resource templates available on the server.
@@ -161,7 +164,7 @@ namespace MCPSharp
         /// <param name="parameters">The parameters for the tool call.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the result of the tool call.</returns>
         [JsonRpcMethod("tools/call", UseSingleObjectParameterDeserialization = true)]
-        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters) => !tools.TryGetValue(parameters.Name, out var toolHandler) ? new CallToolResult { IsError = true, Content = new[] { new Model.Content.TextContent { Text = $"Tool {parameters.Name} not found" } } } : await toolHandler.HandleAsync(parameters.Arguments);
+        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters) => !_toolManager.Tools.TryGetValue(parameters.Name, out var toolHandler) ? new CallToolResult { IsError = true, Content = new[] { new Model.Content.TextContent { Text = $"Tool {parameters.Name} not found" } } } : await toolHandler.HandleAsync(parameters.Arguments);
 
         /// <summary>
         /// Lists the tools available on the server.
@@ -169,7 +172,7 @@ namespace MCPSharp
         /// <returns>A task that represents the asynchronous operation. The task result contains the list of tools.</returns>
         [JsonRpcMethod("tools/list")]
         public async Task<ToolsListResult> ListToolsAsync(object parameters = null) => 
-            await Task.Run(() => new ToolsListResult(tools.Values.Select(t => t.Tool).ToList()));
+            await Task.Run(() => new ToolsListResult(_toolManager.Tools.Values.Select(t => t.Tool).ToList()));
 
         /// <summary>
         /// Pings the server.
@@ -185,120 +188,6 @@ namespace MCPSharp
         [JsonRpcMethod("prompts/list")]
         public async Task<PromptListResult> ListPromptsAsync() => await Task.Run(() => new PromptListResult());
 
-        /// <summary>
-        /// Registers a tool with the server.
-        /// </summary>
-        public static void RegisterTool<T>() where T : class, new()
-        {
-            var type = typeof(T);
-            var toolAttr = type.GetCustomAttribute<McpToolAttribute>() ?? new McpToolAttribute { Name = type.Name, Description = type.GetXmlDocumentation() };
-
-            foreach (var method in type.GetMethods())
-            {
-                var methodAttr = method.GetCustomAttribute<McpFunctionAttribute>();
-                if (methodAttr != null)
-                {
-
-
-                    methodAttr.Name ??= method.Name;
-                    methodAttr.Description ??= method.GetXmlDocumentation();
-
-                    var parameterSchemas = method.GetParameters().ToDictionary(
-                        p => p.Name!,
-                        p => new ParameterSchema
-                        {
-                            Type = p.ParameterType switch
-                            {
-                                Type t when t == typeof(string) => "string",
-                                Type t when t == typeof(int) || t == typeof(double) || t == typeof(float) => "number",
-                                Type t when t == typeof(bool) => "boolean",
-                                Type t when t.IsArray => "array",
-                                Type t when t == typeof(DateTime) => "string",
-                                _ => "object"
-                            },
-                            Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<McpParameterAttribute>()?.Description ?? "",
-                            Required = p.GetCustomAttribute<McpParameterAttribute>()?.Required ?? false,
-                        }
-                    );
-
-                    _instance.tools[methodAttr.Name] = new ToolHandler<object>(new Tool
-                    {
-                        Name = methodAttr.Name,
-                        Description = methodAttr.Description ?? "",
-                        InputSchema = new InputSchema
-                        {
-                            Properties = parameterSchemas,
-                            Required = parameterSchemas.Where(kvp => kvp.Value.Required).Select(kvp => kvp.Key).ToList(),
-                        }
-                    }, method!);
-
-
-                }
-                else
-                {
-                    var resAttr = method.GetCustomAttribute<McpResourceAttribute>();
-                    if (resAttr != null)
-                    {
-                        // Resource registrationre
-                        _instance.resources.Add(new Resource() { Name = resAttr.Name, Description = resAttr.Description, Uri = resAttr.Uri, MimeType = resAttr.MimeType });
-                        //[method.Name] = method.GetCustomAttribute<McpResourceAttribute>().Name ?? method.Name;
-
-                    }
-                    else
-                    {
-
-                        //check for semker
-                        var kernelFunctionAttribute = method.GetCustomAttribute<KernelFunctionAttribute>();
-
-                        if (kernelFunctionAttribute == null)
-                            continue;
-
-                        var parameterSchemas = method.GetParameters().ToDictionary(
-                            p => p.Name!,
-                            p => new ParameterSchema
-                            {
-                                Type = p.ParameterType switch
-                                {
-                                    Type t when t == typeof(string) => "string",
-                                    Type t when t == typeof(int) || t == typeof(double) || t == typeof(float) => "number",
-                                    Type t when t == typeof(bool) => "boolean",
-                                    Type t when t.IsArray => "array",
-                                    Type t when t == typeof(DateTime) => "string",
-                                    _ => "object"
-                                },
-                                Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
-                                Required = p.GetCustomAttribute<RequiredAttribute>() != null,
-                            }
-                        );
-
-                        _instance.tools[kernelFunctionAttribute.Name] = new ToolHandler<object>(new Tool
-                        {
-                            Name = kernelFunctionAttribute.Name,
-                            Description = method.GetCustomAttribute<DescriptionAttribute>().Description ?? "",
-                            InputSchema = new InputSchema
-                            {
-                                Properties = parameterSchemas,
-                                Required = parameterSchemas.Where(kvp => kvp.Value.Required).Select(kvp => kvp.Key).ToList(),
-                            }
-                        }, method!);
-
-                    }
-                }
-            }
-
-            foreach (var property in type.GetProperties())
-            {
-                var resAttr = property.GetCustomAttribute<McpResourceAttribute>();
-                if (resAttr != null)
-                {
-                    // Resource registrationre
-                    _instance.resources.Add(new Resource() { Name = resAttr.Name, Description = resAttr.Description, Uri = resAttr.Uri, MimeType = resAttr.MimeType });
-                    //[method.Name] = method.GetCustomAttribute<McpResourceAttribute>().Name ?? method.Name;
-
-                }
-            }
-        }
-        
         /// <summary>
         /// Starts the JSON-RPC listener.
         /// </summary>

@@ -94,7 +94,7 @@ namespace MCPSharp
                             version = _version }
                  ]);
             result.Wait();
-            //Console.WriteLine(result.Result.ServerInfo.Name);
+         
 
             _ = _rpc.NotifyAsync("notifications/initialized");
             Initialized = true;

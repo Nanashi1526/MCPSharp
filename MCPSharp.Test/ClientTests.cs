@@ -15,6 +15,7 @@
         [ClassCleanup]
         public static void ClassCleanup() { client?.Dispose(); }
 
+        [TestCategory("Tools")]
         [TestMethod("Client - Tools/list")]
         public async Task TestListTools()
         {
@@ -29,6 +30,7 @@
             });
         }
 
+        [TestCategory("Tools")]
         [TestMethod("Client - Tools/Call")]
         public async Task TestCallTool()
         {
@@ -38,7 +40,7 @@
             Assert.AreEqual("Echo: test", response);
         }
 
-
+        [TestCategory("Prompts")]
         [TestMethod("Client - Prompts/List")] 
         public async Task TestListPrompts()
         {
@@ -46,7 +48,7 @@
             Assert.IsFalse(result.Prompts.Count != 0);
         }
 
-
+        [TestCategory("Resources")]
         [TestMethod("Client - Resources/List")]
         public async Task TestResources()
         {
