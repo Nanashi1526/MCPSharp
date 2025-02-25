@@ -1,7 +1,8 @@
 ﻿using MCPSharp;
 using MCPSharp.ExternalExample;
-
+MCPServer.SetOutput("out.txt");
 MCPServer.RegisterTool<ExternalTool>(); 
+MCPServer.RegisterTool<SemKerExample>();
 await MCPServer.StartAsync("TestServer", "1.0");
 
 namespace MCPSharp.Example
@@ -10,6 +11,17 @@ namespace MCPSharp.Example
     [McpTool]
     public class MCPDev()
     {
+        [McpResource("name", "test://{name}")]
+        public string Name(string name) => $"hello {name}";
+
+
+        [McpResource("settings", "test://settings")]
+        public string Settings { get; set; } = "settings";
+
+
+        [McpFunction("write-to-console", "write a string to the console")]
+        public static void WriteToConsole(string message) => Console.WriteLine(message);
+
         ///<summary>just returns a message for testing.</summary>
         [McpFunction]
         public static string Hello() => "hello, claude.";

@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "<Pending>", Scope = "member", Target = "~M:MCPSharp.Test.ImplementationTests.Test_ListTools~System.Threading.Tasks.Task")]
-[assembly: SuppressMessage("Usage", "MSTEST0034:Use 'ClassCleanupBehavior.EndOfClass' with the '[ClassCleanup]'", Justification = "<Pending>", Scope = "member", Target = "~M:MCPSharp.Test.ImplementationTests.ClassCleanup")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "<Pending>", Scope = "member", Target = "~M:MCPSharp.Test.STDIOTransportTests.Test_ListTools~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "MSTEST0034:Use 'ClassCleanupBehavior.EndOfClass' with the '[ClassCleanup]'", Justification = "<Pending>", Scope = "member", Target = "~M:MCPSharp.Test.STDIOTransportTests.ClassCleanup")]

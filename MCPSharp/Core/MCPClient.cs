@@ -1,9 +1,12 @@
-﻿using MCPSharp.Model;
+﻿using MCPSharp.Core.Transport;
+using MCPSharp.Core.Transport.SSE;
+using MCPSharp.Model;
 using MCPSharp.Model.Parameters;
 using MCPSharp.Model.Results;
 using StreamJsonRpc;
 using System.Diagnostics;
-using System.IO.Pipelines;
+
+using System.Net.Http.Headers;
 
 namespace MCPSharp
 {
@@ -15,8 +18,11 @@ namespace MCPSharp
         private readonly string _name;
         private readonly string _version;
         private readonly Process _process;
-        private readonly JsonRpc _rpc;
+        private JsonRpc _rpc;
+        public bool Initialized { get; private set; } = false;
 
+        private HttpClient _httpClient;
+        private Stream _stream;
         /// <summary>
         /// The tools that have been registered with the client.
         /// </summary>
@@ -67,13 +73,86 @@ namespace MCPSharp
             _ = GetToolsAsync();
         }
 
+        public MCPClient(Uri address, string name, string version)
+        {
+            _name = name;
+            _version = version;
+            _httpClient = new HttpClient();
+            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(
+                new DuplexPipe(_httpClient.GetStreamAsync(address).Result, 
+                new HttpPostStream(address.ToString())), new SystemTextJsonFormatter()));
+            _rpc.StartListening();
+            var result = _rpc.InvokeAsync<InitializeResult>(
+                 "initialize",
+                 [
+                     "2024-11-05",
+                        new {
+                            roots = new { listChanged = false },
+                            sampling = new { } },
+                        new {
+                            name = _name,
+                            version = _version }
+                 ]);
+            result.Wait();
+            //Console.WriteLine(result.Result.ServerInfo.Name);
+
+            _ = _rpc.NotifyAsync("notifications/initialized");
+        }
+        /// <summary>
+        /// resets the connection to an SSE connection 
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        public async Task InitiateSseAsync(string address = "localhost", int port = 8080)
+        {
+
+            _httpClient?.Dispose();
+            _httpClient = new HttpClient();
+
+            // Configure request with proper headers
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"http://{address}:{port}/sse");
+
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+            //EventSource eventSource = new EventSource($"http://{address}:{port}/sse");
+            //eventSource.MessageReceived += (sender, e) => Console.WriteLine(e.Message.Data);
+
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+            response.EnsureSuccessStatusCode();
+
+            _stream = await response.Content.ReadAsStreamAsync();
+
+            _rpc?.Dispose();
+
+            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(
+                new DuplexPipe(_stream, new HttpPostStream($"http://{address}:{port}/messages")),
+                new SystemTextJsonFormatter()));
+
+            _rpc.StartListening();
+            _ = _rpc.InvokeAsync<InitializeResult>(
+                 "initialize",
+                 [
+                     "2024-11-05",
+                        new {
+                            roots = new { listChanged = false },
+                            sampling = new { } },
+                        new {
+                            name = _name,
+                            version = _version }
+                 ]);
+
+            _ = _rpc.NotifyAsync("notifications/initialized");
+
+        }
+
         /// <summary>
         /// Gets a list of tools from the MCP server.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of tools.</returns>
         public async Task<List<Tool>> GetToolsAsync()
         {
-            Tools = (await _rpc.InvokeAsync<ToolsListResult>("tools/list")).Tools;
+            Tools = (await _rpc.InvokeAsync<ToolsListResult>("tools/list", new { })).Tools;
             return Tools; 
         }
         

@@ -1,7 +1,9 @@
-﻿namespace MCPSharp.Test
+﻿using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2.HPack;
+
+namespace MCPSharp.Test
 {
     [TestClass]
-    public sealed class ImplementationTests
+    public sealed class STDIOTransportTests
     {
         private readonly static MCPClient client = new("Test Client", "1.0.0", "MCPSharp.Example.exe");
 
@@ -31,6 +33,16 @@
             var result = await client.CallToolAsync("Hello");
             string response = result.Content[0].Text;
             Assert.AreEqual("hello, claude.", response);
+        }
+
+
+        [TestCategory("Tools")]
+        [TestMethod("Tools/Call with semantic kernel function")]
+        public async Task TestCallTool_semantic()
+        {
+            var result = await client.CallToolAsync("SemanticTest");
+            string response = result.Content[0].Text;
+            Assert.AreEqual("success", response);
         }
 
         [TestCategory("Tools")]
@@ -66,7 +78,7 @@
             Assert.IsTrue(result.IsError);
         }
 
-        [TestMethod("Test tool loaded from dll")] 
+        [TestMethod("Tools/Call with dll tool")] 
         public async Task TestCallExternalTool()
         {
             var result = await client.CallToolAsync("dll-tool");
@@ -74,12 +86,6 @@
             Assert.AreEqual("success", response);
         }
 
-        [TestMethod("List Resources")]
-        public async Task TestListResources()
-        {
-            var result = await client.GetResourcesAsync();
-            Assert.IsFalse(result.Resources.Count != 0); 
-        }
 
         [TestMethod("List Prompts")]
         public async Task TestListPrompts()
@@ -92,6 +98,49 @@
         public async Task TestPing()
         {
             await client.PingAsync();
+        }
+
+        [TestMethod("Resources/List")]
+        public async Task TestResources()
+        {
+            var result = await client.GetResourcesAsync(); 
+            Assert.IsTrue(result.Resources.Count != 0);
+            result.Resources.ForEach(result =>
+            {
+                Console.WriteLine(result.Name);
+            });
+        }
+      
+    }
+
+    [TestClass]
+    public class ClientTests
+    {
+        public static MCPClient client;
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) 
+        {
+            client = new("Test Client", "1.0.0", "C:\\Program Files\\nodejs\\npx.cmd", "-y @modelcontextprotocol/server-memory");
+        } 
+
+
+        [ClassCleanup]
+        public static void ClassCleanup() { client?.Dispose(); }
+
+        [TestMethod("Tools/list")]
+        [Timeout(10000)]
+        public async Task TestListTools()
+        {
+            var tools = await client.GetToolsAsync();
+            Assert.IsNotNull(tools);
+            Assert.IsTrue(tools.Count > 0);
+            tools.ForEach(tool =>
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(tool.Name));
+                Assert.IsFalse(string.IsNullOrEmpty(tool.Description));
+                Console.WriteLine(tool.Name);
+            });
         }
 
     }

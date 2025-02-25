@@ -4,9 +4,9 @@ using MCPSharp.Model.Results;
 using System.Reflection;
 using System.Text.Json;
 
-namespace MCPSharp.Core
+namespace MCPSharp.Core.Tools
 {
-    internal class ToolHandler<T>(Tool tool, MethodInfo method) where T : class, new()
+    public class ToolHandler<T>(Tool tool, MethodInfo method) where T : class, new()
     {
         public Tool Tool = tool;
         private readonly MethodInfo _method = method;

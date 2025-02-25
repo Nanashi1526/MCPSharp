@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace MCPSharp.Model.Results
+namespace MCPSharp
 {
     public class ResourcesListResult
     {

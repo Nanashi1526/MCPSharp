@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace MCPSharp
+namespace MCPSharp.Model.Results
 {
     /// <summary>
     /// the prompt list result
