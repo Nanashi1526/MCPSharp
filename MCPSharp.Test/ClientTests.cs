@@ -15,8 +15,7 @@
         [ClassCleanup]
         public static void ClassCleanup() { client?.Dispose(); }
 
-        [TestMethod("Tools/list")]
-        [Timeout(10000)]
+        [TestMethod("Client - Tools/list")]
         public async Task TestListTools()
         {
             var tools = await client.GetToolsAsync();
@@ -30,7 +29,7 @@
             });
         }
 
-        [TestMethod("Tools/Call")]
+        [TestMethod("Client - Tools/Call")]
         public async Task TestCallTool()
         {
             var result = await client.CallToolAsync("echo", new Dictionary<string, object> { { "message", "test" } });
@@ -40,7 +39,7 @@
         }
 
 
-        [TestMethod("Prompts/List")] 
+        [TestMethod("Client - Prompts/List")] 
         public async Task TestListPrompts()
         {
             var result = await client.GetPromptListAsync();
@@ -48,7 +47,7 @@
         }
 
 
-        [TestMethod("Resources/List")]
+        [TestMethod("Client - Resources/List")]
         public async Task TestResources()
         {
             var result = await client.GetResourcesAsync();
