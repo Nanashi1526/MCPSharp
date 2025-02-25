@@ -1,8 +1,4 @@
-[![Build](https://github.com/afrise/MCPSharp/actions/workflows/build.yml/badge.svg)](https://github.com/afrise/MCPSharp/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/nuget/v/MCPSharp)](https://www.nuget.org/packages/MCPSharp)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/MCPSharp)](https://www.nuget.org/packages/MCPSharp)
-
-# ![MCPSharp Banner](https://github.com/afrise/MCPSharp/blob/master/MCPSharp/icon.png)  MCPSharp
+﻿# MCPSharp
 
 MCPSharp is a .NET library that helps you build Model Context Protocol (MCP) servers - the standardized API protocol used by AI assistants and models. With MCPSharp, you can:
 
@@ -29,7 +25,8 @@ Use MCPSharp when you want to:
 
 ## Prerequisites
 
-- .net Framework 4.6 or higher
+- any version of .NET that supports [standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#tabpanel_1_net-standard-2-0)
+  
 
 ## Installation
 
@@ -56,7 +53,8 @@ public class Calculator
     }
 }
 ```
-### 2. Start the server
+
+Then just start the server:
 ```csharp
 await MCPServer.StartAsync("CalculatorServer", "1.0.0");
 ```
@@ -68,16 +66,39 @@ await MCPServer.StartAsync("CalculatorServer", "1.0.0");
 - `[McpTool]` - Marks a class as an MCP tool
     -  Optional parameters:
         - `Name` - The tool name (default: class name)
-        - `Description` - A description of the tool. This should be used to provide additional context to the tool. Will use the XML summary (see relevant section) if not provided.)
+        - `Description` - A description of the tool. This should be used to provide additional 
+          context to the tool. Will use the XML summary (see relevant section) if not provided.)
         
 - `[McpFunction]` - Marks a method as an MCP function
     - Optional parameters:
         - `Name` - The function name (default: method name)
-        - `Description` - A description of the function. This should be used to provide additional context to the function. Will use the XML summary (see relevant section) if not provided.)
+        - `Description` - A description of the function. This should be used to provide additional 
+           context to the function. Will use the XML summary (see relevant section) if not provided.)
 - `[McpParameter]` - Provides metadata for function parameters
     - Optional parameters:
-        - `Description` - A description of the parameter. This should be used to provide additional context to the parameter.
+        - `Description` - A description of the parameter. This should be used to provide additional 
+            context to the parameter.
         - `Required` - Whether the parameter is required (default: false)
+
+### Additional Methods
+
+- `MCPServer.StartAsync(string toolName, string toolVersion)` - Starts the MCP server with the specified 
+              tool name and version. This method should be called to start the server.
+
+  - `MCPServer.RegisterTool<T>()` - Registers a tool with the server. This method should be called before 
+        starting the server, IF you wish to register a tool that is loaded from an external class library, 
+        or a semantic kernel function. 
+     Any `[McpTool]` that are part of the main assembly will be automatically registered.
+    - `T` can be either a class that has the `[McpTool]` attrubutes, OR it can be a class defined with 
+[Semantic Kernel's KernelFunction Attributes](https://learn.microsoft.com/en-us/dotnet/api/microsoft.semantickernel.kernelfunctionattribute?view=semantic-kernel-dotnet)
+      - `MCPServer.RegisterTool<MyMcpToolClass>();`
+
+### Client
+There is a client class included as well, designed to help with testing. It is provided as is, and is 
+not extremely flexible. I would suggest anyone wanting a client to check out 
+[mcpdotnet](https://github.com/PederHP/mcpdotnet), as it seems to be much more feature complete. If you 
+would like to use the MCPSharp implementation anyway, check out the MCPSharp.Test project for how it works. 
+
 
 ## Example
 
@@ -157,9 +178,11 @@ MCPSharp uses the following priority order when determining descriptions:
 We have several features planned for future releases of MCPSharp:
 
 - **Complex Object Parameter Parsing**: Properly parse input/return parameters that are complicated objects. Currently they can be used, but the library will not expose the shape of the object to the client, so it must be mentioned in the description somewhere.
-- **Tool Change Notifications**: Implement notifications for tool changes.
+- **Tool Change Notifications**: Implement notifications for tool changes (updates client when tools are added/updated/deleted)
 - **Standardized Error Handling**: Standardize error handling across the library.
 - **Additional Endpoints**: Implement the rest of the endpoints like resources, etc.
+- **SSE Transport**: enable the use of Server-Sent Events as a transport mechanism.
+- 
 
 
 ### IntelliSense Support
