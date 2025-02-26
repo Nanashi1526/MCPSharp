@@ -1,4 +1,8 @@
-﻿# MCPSharp
+[![Build](https://github.com/afrise/MCPSharp/actions/workflows/build.yml/badge.svg)](https://github.com/afrise/MCPSharp/actions/workflows/build.yml)
+[![NuGet](https://img.shields.io/nuget/v/MCPSharp)](https://www.nuget.org/packages/MCPSharp)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/MCPSharp)](https://www.nuget.org/packages/MCPSharp)
+
+# ![MCPSharp Banner](https://github.com/afrise/MCPSharp/blob/master/MCPSharp/icon.png)  MCPSharp
 
 MCPSharp is a .NET library that helps you build Model Context Protocol (MCP) servers - the standardized API protocol used by AI assistants and models. With MCPSharp, you can:
 
