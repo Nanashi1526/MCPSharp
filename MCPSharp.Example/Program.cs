@@ -1,6 +1,6 @@
 ﻿using MCPSharp;
 using MCPSharp.ExternalExample;
-MCPServer.SetOutput("out.txt");
+//MCPServer.SetOutput(TextWriter.Null);
 MCPServer.RegisterTool<ExternalTool>(); 
 MCPServer.RegisterTool<SemKerExample>();
 await MCPServer.StartAsync("TestServer", "1.0");

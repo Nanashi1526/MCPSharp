@@ -1,17 +1,16 @@
-﻿using MCPSharp.Model;
+﻿using MCPSharp.Core.Tools;
+using MCPSharp.Core.Transport;
+using MCPSharp.Core.Transport.SSE;
+using MCPSharp.Model;
 using MCPSharp.Model.Capabilities;
 using MCPSharp.Model.Parameters;
 using MCPSharp.Model.Results;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using StreamJsonRpc;
 using System.Reflection;
-using MCPSharp.Core.Transport.SSE;
-using MCPSharp.Core.Transport;
-
 using System.Text;
-using MCPSharp.Core.Tools;
 
 namespace MCPSharp
 {
@@ -49,14 +48,41 @@ namespace MCPSharp
         }
 
         /// <summary>
+        /// Constructor for SSE instances
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
+        private MCPServer(Stream input, Stream output)
+        { 
+            var pipe = new DuplexPipe(input, output);
+            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
+            _rpc.StartListening();
+        }
+
+        /// <summary>
+        /// Constructor for the MCP server with implementation details.
+        /// </summary>
+        /// <param name="implementation">The implementation details of the server.</param>
+        public MCPServer(Implementation implementation) : this() => Implementation = implementation;
+
+        /// <summary>
+        /// Constructor for the MCP server with output redirection.
+        /// </summary>
+        /// <param name="outputWriter">A TextWriter object where any Console.Write() calls will go.</param>
+        public MCPServer(TextWriter outputWriter) : this() => RedirectedOutput = outputWriter;
+
+        /// <summary>
         /// Registers a tool with the server.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public static void RegisterTool<T>() where T : class, new()
-        {
-            _instance._toolManager.RegisterTool<T>();
-        }
-        // Factory method to create new instances for SSE clients
+        public static void RegisterTool<T>() where T : class, new() => _instance._toolManager.RegisterTool<T>();
+        
+        /// <summary>
+        /// Factory method to create new instances for SSE clients
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
+        /// <returns></returns>
         private static MCPServer CreateSseInstance(Stream input, Stream output)
         {
             var instance = new MCPServer(input, output);
@@ -78,34 +104,6 @@ namespace MCPSharp
         /// <param name="output"></param>
         public static void SetOutput(TextWriter output) => Console.SetOut(output);
 
-
-
-        /// <summary>
-        /// Constructor for SSE instances
-        /// </summary>
-        /// <param name="input"></param>
-        /// <param name="output"></param>
-        private MCPServer(Stream input, Stream output)
-        {
-            
-            var pipe = new DuplexPipe(input, output);
-            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
-            _rpc.StartListening();
-
-        }
-
-        /// <summary>
-        /// Constructor for the MCP server with implementation details.
-        /// </summary>
-        /// <param name="implementation">The implementation details of the server.</param>
-        public MCPServer(Implementation implementation) : this() => Implementation = implementation;
-
-        /// <summary>
-        /// Constructor for the MCP server with output redirection.
-        /// </summary>
-        /// <param name="outputWriter">A TextWriter object where any Console.Write() calls will go.</param>
-        public MCPServer(TextWriter outputWriter) : this() => RedirectedOutput = outputWriter;
-
         /// <summary>
         /// Starts the MCP Server, registers all tools, and starts listening for requests.
         /// </summary>
@@ -126,6 +124,8 @@ namespace MCPSharp
 
             await Task.Delay(-1);
         }
+
+
 
         /// <summary>
         /// Initializes the server with the specified protocol version, client capabilities, and client information.
@@ -164,7 +164,14 @@ namespace MCPSharp
         /// <param name="parameters">The parameters for the tool call.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the result of the tool call.</returns>
         [JsonRpcMethod("tools/call", UseSingleObjectParameterDeserialization = true)]
-        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters) => !_toolManager.Tools.TryGetValue(parameters.Name, out var toolHandler) ? new CallToolResult { IsError = true, Content = new[] { new Model.Content.TextContent { Text = $"Tool {parameters.Name} not found" } } } : await toolHandler.HandleAsync(parameters.Arguments);
+        public async Task<CallToolResult> CallToolAsync(ToolCallParameters parameters) => 
+            !_toolManager.Tools.TryGetValue(parameters.Name, out var toolHandler) ? 
+                new CallToolResult { 
+                    IsError = true, 
+                    Content = new[] { new Model.Content.TextContent { Text = $"Tool {parameters.Name} not found" } } ,
+
+                } 
+                : await toolHandler.HandleAsync(parameters.Arguments);
 
         /// <summary>
         /// Lists the tools available on the server.

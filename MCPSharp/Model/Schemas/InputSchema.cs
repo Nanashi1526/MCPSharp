@@ -24,5 +24,17 @@ namespace MCPSharp.Model.Schemas
         /// </summary>
         [JsonPropertyName("required")]
         public List<string> Required { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating additional props.
+        /// </summary>
+        [JsonPropertyName("additionalProperties")]
+        public bool AdditionalProperties { get; set; } = false;
+
+        /// <summary>
+        /// the schema version
+        /// </summary>
+        [JsonPropertyName("$schema")]
+        public string Schema = "https://json-schema.org/draft/2020-12/schema#";
     }
 }

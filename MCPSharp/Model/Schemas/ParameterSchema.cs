@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json.Schema;
+using System.Text.Json.Serialization;
 
 namespace MCPSharp.Model.Schemas
 {
@@ -22,7 +23,8 @@ namespace MCPSharp.Model.Schemas
         /// <summary>
         /// Gets or sets a value indicating whether the parameter is required.
         /// </summary>
-        [JsonPropertyName("required")]
+      
+        [JsonIgnore]
         public bool Required { get; set; } = false;
     }
 }
