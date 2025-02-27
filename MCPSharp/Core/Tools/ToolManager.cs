@@ -9,8 +9,8 @@ namespace MCPSharp.Core.Tools
 {
     class ToolManager
     {
-        public readonly Dictionary<string, ToolHandler<object>> Tools = new();
-        public readonly List<Resource> Resources = new();
+        public readonly Dictionary<string, ToolHandler> Tools = [];
+        public readonly List<Resource> Resources = [];
 
 
         /// <summary>
@@ -19,8 +19,7 @@ namespace MCPSharp.Core.Tools
         public void RegisterTool<T>() where T : class, new()
         {
             var type = typeof(T);
-            var toolAttr = type.GetCustomAttribute<McpToolAttribute>() ?? new McpToolAttribute { Name = type.Name, Description = type.GetXmlDocumentation() };
-
+            
             foreach (var method in type.GetMethods())
             {
                 //these both will exit early if they don't find the right attribute
@@ -41,6 +40,11 @@ namespace MCPSharp.Core.Tools
                     });   
                 }
             }
+        }
+
+        public void AddToolHandler(ToolHandler tool) 
+        {
+            Tools[tool.Tool.Name] = tool;
         }
 
         private void RegisterSemanticKernelFunction(MethodInfo method)
@@ -66,7 +70,7 @@ namespace MCPSharp.Core.Tools
                 }
             );
 
-            Tools[kernelFunctionAttribute.Name] = new ToolHandler<object>(new Tool
+            Tools[kernelFunctionAttribute.Name] = new ToolHandler(new Tool
             {
                 Name = kernelFunctionAttribute.Name,
                 Description = method.GetCustomAttribute<DescriptionAttribute>().Description ?? "",
@@ -80,11 +84,26 @@ namespace MCPSharp.Core.Tools
 
         private void RegisterMcpFunction(MethodInfo method)
         {
-            var methodAttr = method.GetCustomAttribute<McpFunctionAttribute>();
-            if (methodAttr == null) return;
+            string name = "";
+            string description = "";
 
-            methodAttr.Name ??= method.Name;
-            methodAttr.Description ??= method.GetXmlDocumentation();
+            var mcpFuncAttr = method.GetCustomAttribute<McpFunctionAttribute>();
+            if (mcpFuncAttr != null)
+            {
+                name = mcpFuncAttr.Name ?? method.Name;
+                description = mcpFuncAttr.Description ?? method.GetXmlDocumentation(); 
+            }
+            else
+            {
+                var methodAttr = method.GetCustomAttribute<McpToolAttribute>();
+                if (methodAttr != null)
+                {
+                    name = methodAttr.Name ?? method.Name;
+                    description = methodAttr.Description ?? method.GetXmlDocumentation();
+                }
+                else { return; }
+            }
+           
 
             var parameterSchemas = method.GetParameters().ToDictionary(
                 p => p.Name!,
@@ -101,13 +120,19 @@ namespace MCPSharp.Core.Tools
                     },
                     Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<McpParameterAttribute>()?.Description ?? "",
                     Required = p.GetCustomAttribute<McpParameterAttribute>()?.Required ?? false,
+                    Contents = p.ParameterType.IsArray ? new ParameterSchema
+                    {
+                        Type = p.ParameterType.GetElementType()!.Name,
+                        Description = p.GetXmlDocumentation() ?? p.GetCustomAttribute<McpParameterAttribute>()?.Description ?? "",
+                        Required = p.GetCustomAttribute<McpParameterAttribute>()?.Required ?? false,
+                    } : null
                 }
             );
 
-            Tools[methodAttr.Name] = new ToolHandler<object>(new Tool
+            Tools[name] = new ToolHandler(new Tool
             {
-                Name = methodAttr.Name,
-                Description = methodAttr.Description ?? "",
+                Name = name,
+                Description = description ?? "",
                 InputSchema = new InputSchema
                 {
                     Properties = parameterSchemas,

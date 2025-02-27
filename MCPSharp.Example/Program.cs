@@ -1,14 +1,31 @@
 ﻿using MCPSharp;
+using MCPSharp.Model;
 using MCPSharp.ExternalExample;
-//MCPServer.SetOutput(TextWriter.Null);
+using MCPSharp.Model.Schemas;
+
 MCPServer.RegisterTool<ExternalTool>(); 
 MCPServer.RegisterTool<SemKerExample>();
+
+MCPServer.AddToolHandler( new Tool() 
+{
+    Name = "dynamicTool",
+    Description = "A Test Tool",
+    InputSchema = new InputSchema {
+        Type = "object",
+        Required = ["input"],
+        Properties = new Dictionary<string, ParameterSchema>{
+            {"input", new ParameterSchema{Type="string", Description="the input"}},
+            {"input2", new ParameterSchema{Type="string", Description="the input2"}}
+        }
+    }
+}, (string input, string input2) => { return $"hello, {input}.\n{input2}"; });
+
+
 await MCPServer.StartAsync("TestServer", "1.0");
 
 namespace MCPSharp.Example
 {
     ///<summary>testing interface for custom .net mcp server</summary>
-    [McpTool]
     public class MCPDev()
     {
         [McpResource("name", "test://{name}")]
@@ -34,7 +51,7 @@ namespace MCPSharp.Example
         ///<summary>Add Two Numbers</summary>
         ///<param name="a">first number</param>
         ///<param name="b">second number</param>
-        [McpFunction]
+        [McpTool] 
         public static string Add(int a, int b) => (a + b).ToString();
 
 

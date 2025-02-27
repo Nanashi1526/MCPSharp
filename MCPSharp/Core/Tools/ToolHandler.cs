@@ -6,28 +6,29 @@ using System.Text.Json;
 
 namespace MCPSharp.Core.Tools
 {
-    public class ToolHandler<T>(Tool tool, MethodInfo method) where T : class, new()
+    public class ToolHandler(Tool tool, MethodInfo method)
     {
         public Tool Tool = tool;
         private readonly MethodInfo _method = method;
-        private readonly T _instance = new(); 
        
         public async Task<CallToolResult> HandleAsync(Dictionary<string, object> parameters, CancellationToken cancellationToken = default)
         {
             try
             {
-                
                 var inputValues = new Dictionary<string, object>();
 
                 foreach (var item in parameters)
                 {
                     if (item.Value is JsonElement jsonElement)
                     {
-                        inputValues.Add(item.Key, JsonSerializer.Deserialize(jsonElement.GetRawText()!, _method.GetParameters().FirstOrDefault(p => p.Name == item.Key)!.ParameterType!)!);
+                        var val = JsonSerializer.Deserialize(jsonElement.GetRawText()!,
+                            _method.GetParameters().FirstOrDefault(p => p.Name == item.Key)!.ParameterType!)!;
+
+                        inputValues.Add(item.Key, val);
                     }
                 }
 
-                var result = _method.Invoke(_instance, [.. inputValues.Values]);
+                var result = _method.Invoke(Activator.CreateInstance(_method.DeclaringType), [.. inputValues.Values]);
 
                 if (result is Task task)
                 {

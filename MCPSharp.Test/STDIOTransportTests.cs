@@ -1,5 +1,4 @@
 ﻿using MCPSharp.Example;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2.HPack;
 
 namespace MCPSharp.Test
 {
@@ -36,6 +35,14 @@ namespace MCPSharp.Test
             Assert.AreEqual("hello, claude.", response);
         }
 
+        [TestCategory("Tools")]
+        [TestMethod("Tools/Call with a dynamically created tool")]
+        public async Task TestCallDynamicTool()
+        {
+            var result = await client.CallToolAsync("dynamicTool", new Dictionary<string, object> { { "input", "test string" }, { "input2", "another string" } });
+            string response = result.Content[0].Text;
+            Assert.AreEqual("hello, test string.\nanother string", response);
+        }
 
         [TestCategory("Tools")]
         [TestMethod("Tools/Call with semantic kernel function")]

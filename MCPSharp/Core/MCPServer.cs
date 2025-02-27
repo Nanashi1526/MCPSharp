@@ -76,7 +76,14 @@ namespace MCPSharp
         /// </summary>
         /// <typeparam name="T"></typeparam>
         public static void RegisterTool<T>() where T : class, new() => _instance._toolManager.RegisterTool<T>();
-        
+
+
+        public static void AddToolHandler(Tool tool, Delegate func)
+        {
+            _instance._toolManager.AddToolHandler(new ToolHandler(tool, func.Method));
+        }
+
+
         /// <summary>
         /// Factory method to create new instances for SSE clients
         /// </summary>
@@ -114,7 +121,17 @@ namespace MCPSharp
         {
             _instance.Implementation = new(serverName, version);
 
-            foreach (var toolType in Assembly.GetEntryAssembly()!.GetTypes().Where(t => t.GetCustomAttribute<McpToolAttribute>() != null))
+            
+            var allTypes = Assembly.GetEntryAssembly()!.GetTypes()
+                .Where(t => {
+                    bool classHasToolAttribute = t.GetCustomAttribute<McpToolAttribute>() != null;
+                    bool methodHasToolAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpFunctionAttribute>() != null);
+                    bool methodHasResourceAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpResourceAttribute>() != null);
+
+                    return classHasToolAttribute || methodHasToolAttribute || methodHasResourceAttribute;
+                    });
+
+            foreach (var toolType in allTypes)
             {
                 var registerMethod = typeof(MCPServer).GetMethod(nameof(ToolManager.RegisterTool))?.MakeGenericMethod(toolType);
                 registerMethod?.Invoke(_instance, null);
