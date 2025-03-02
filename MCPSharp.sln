@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.Test", "MCPSharp.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.Example.Import", "MCPSharp.ExternalExample\MCPSharp.Example.Import.csproj", "{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.Example.OllamaChatCLI", "MCPSharp.Example.OllamaChatCLI\MCPSharp.Example.OllamaChatCLI.csproj", "{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}.Release|x64.ActiveCfg = Release|Any CPU
 		{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}.Release|x64.Build.0 = Release|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Debug|x64.Build.0 = Debug|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Release|x64.ActiveCfg = Release|Any CPU
+		{73FD6F85-CCEE-4D80-8E8B-154F94511DD2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

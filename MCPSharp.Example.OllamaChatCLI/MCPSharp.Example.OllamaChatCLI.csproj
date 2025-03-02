@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI" Version="9.3.0-preview.1.25114.11" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.3.0-preview.1.25114.11" />
+    <PackageReference Include="Microsoft.Extensions.AI.Ollama" Version="9.3.0-preview.1.25114.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MCPSharp.Example\MCPSharp.Example.csproj" />
+    <ProjectReference Include="..\MCPSharp.ExternalExample\MCPSharp.Example.Import.csproj" />
+    <ProjectReference Include="..\MCPSharp\MCPSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

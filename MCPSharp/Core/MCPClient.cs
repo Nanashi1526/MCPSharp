@@ -99,7 +99,7 @@ namespace MCPSharp
         /// </summary>
         /// <returns></returns>
         [JsonRpcMethod("ping")]
-        public async Task<object> RecievePingAsync() => await Task.FromResult<object>(new());
+        public static async Task<object> RecievePingAsync() => await Task.FromResult<object>(new());
 
 
         /// <summary>
@@ -197,7 +197,10 @@ namespace MCPSharp
         /// </summary>
         public void Dispose()
         {
-            _rpc.DispatchCompletion.Wait();
+            GC.SuppressFinalize(this);
+            
+            _ = _rpc.DispatchCompletion;
+
             _rpc.Dispose();
 
             _process.Kill();

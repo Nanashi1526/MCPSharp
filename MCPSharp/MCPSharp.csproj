@@ -8,25 +8,30 @@
 	  
     <!-- Package Metadata -->
     <PackageId>MCPSharp</PackageId>
-    <Version>0.9.8</Version>
+    <Version>0.9.13</Version>
     <Authors>Allen Frise</Authors>
     <Company></Company>
     <Title>MCPSharp - Model Context Protocol for .NET</Title>
-    <Description>
-Build Model Context Protocol (MCP) servers in .NET with MCPSharp. 
+    <Description>Build Model Context Protocol (MCP) servers and clients in .NET with MCPSharp. 
 
-Create MCP-compliant tools and functions that AI models can discover and use. Features attribute-based API, and seamless JSON-RPC communication.
+Create MCP-compliant tools and functions that AI models can discover and use. 
+Features easy to use attribute-based API allowing anyone to spin up a server in minutes, 
+and a Microsoft.Extensions.AI compatible client that generates AIFunctions, 
+ready to be consumed by any IChatClient or compatible system.
 
 
 await MCPServer.StartAsync("EchoServer", "1.0.0");
-[McpTool]
+
+--- server:
 class MyTool 
 {
-    [McpFunction("echo","returns the input string back to you")]
+    [McpTool("echo","returns the input string back to you")]
     public string echo(string input) =&gt; input;
 }
 
-</Description>
+---client:
+var client = new MCPClient("MyClient","1.0.0", "EchoServer.exe" //or dotnet EchoServer.dll if you wish
+await client.CallToolAsync("echo", new Dictionary&lt;string, object&gt;{{"input", "input string to echo"}});</Description>
 	<PackageIcon>icon.png</PackageIcon>
     <!-- Package Tags -->
     <PackageTags>mcp;sharp;mcpsharp;mcp-sharp;mcp#;ai;machine-learning;json-rpc;api;tools;claude;anthropic;model-context-protocol;tool-calling;model;context;protocol;server;mcp-server;modelcontextprotocol;mcpserver;standard;</PackageTags>
@@ -35,9 +40,18 @@ class MyTool
     <RepositoryType>git</RepositoryType>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/afrise/MCPSharp</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReleaseNotes>* Microsoft.Extensions.AI Integration: MCPSharp now integrates with Microsoft.Extensions.AI, allowing tools to be exposed as AIFunctions
+* Semantic Kernel Support: Add tools using Semantic Kernel's KernelFunctionAttribute
+* Dynamic Tool Registration: Register tools on-the-fly with custom implementation logic
+* Tool Change Notifications: Server now notifies clients when tools are added, updated, or removed
+* Complex Object Parameter Support: Better handling of complex objects in tool parameters
+* Better Error Handling: Improved error handling with detailed stack traces</PackageReleaseNotes>
+    <AssemblyVersion>0.9.13</AssemblyVersion>
+    <FileVersion>0.9.13</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
@@ -57,6 +71,13 @@ class MyTool
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.3.0" />
@@ -72,12 +93,6 @@ class MyTool
     </PackageReference>
     <PackageReference Include="StreamJsonRpc" Version="2.21.10" />
     <PackageReference Include="System.Net.ServerSentEvents" Version="9.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

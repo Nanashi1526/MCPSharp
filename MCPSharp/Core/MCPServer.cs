@@ -27,18 +27,23 @@ namespace MCPSharp
         private readonly ServerRpcTarget _target;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
-
-        public static bool EnableToolChangeNotification = false;
-
-        public static bool EnablePing = true;
+        /// <summary>
+        /// true if tool change notifications are enabled. This will set to true if the client supports it during initialization, but can be disabled.
+        /// </summary>
+        public static bool EnableToolChangeNotification { get; set; } = false;
 
         /// <summary>
-        /// The implementation details of the server.
+        /// Enables periodic pings to the client. If the client does not respond, the server will exit. Default is true, as clients are supposed to respond to pings.
+        /// </summary>
+        public static bool EnablePing { get; set; } = true;
+
+        /// <summary>
+        /// The name and version of the server implementation
         /// </summary>
         public Implementation Implementation;
 
         /// <summary>
-        /// The output of Console.WriteLine()
+        /// Any calls to Console.Write() will be sent to this text writer. Overwrite it if you wish to capture this stream.
         /// </summary>
         public readonly TextWriter RedirectedOutput = TextWriter.Null;
 

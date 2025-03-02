@@ -10,6 +10,8 @@ namespace MCPSharp
     class ServerRpcTarget(ToolManager toolManager, ResourceManager resourceManager, Implementation implementation)
     {
         private Implementation _clientInfo;
+        private ClientCapabilities _clientCapabilities;
+
         /// <summary>
         /// Initializes the server with the specified protocol version, client capabilities, and client information.
         /// </summary>
@@ -21,10 +23,11 @@ namespace MCPSharp
         public async Task<InitializeResult> InitializeAsync(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo)
         {
             _clientInfo = clientInfo;
+            _clientCapabilities = capabilities;
 
-            if (capabilities.Tools.ContainsKey("listChanged"))
+            if (capabilities.Tools.TryGetValue("listChanged", out bool value))
             {
-                MCPServer.EnableToolChangeNotification = capabilities.Tools["listChanged"];
+                MCPServer.EnableToolChangeNotification = value;
             }
 
             return await Task.FromResult<InitializeResult>(
@@ -52,7 +55,7 @@ namespace MCPSharp
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the list of resource templates.</returns>
         [JsonRpcMethod("resources/templates/list")]
-        public async Task<ResourceTemplateListResult> ListResourceTemplatesAsync() => await Task.Run(() => new ResourceTemplateListResult());
+        public static async Task<ResourceTemplateListResult> ListResourceTemplatesAsync() => await Task.Run(() => new ResourceTemplateListResult());
 
         /// <summary>
         /// Calls a tool with the specified parameters.
@@ -81,13 +84,13 @@ namespace MCPSharp
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the ping response.</returns>
         [JsonRpcMethod("ping")]
-        public async Task<object> PingAsync() => await Task.FromResult<object>(new());
+        public static async Task<object> PingAsync() => await Task.FromResult<object>(new());
 
         /// <summary>
         /// Lists the prompts available on the server.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the list of prompts.</returns>
         [JsonRpcMethod("prompts/list")]
-        public async Task<PromptListResult> ListPromptsAsync() => await Task.Run(() => new PromptListResult());
+        public static async Task<PromptListResult> ListPromptsAsync() => await Task.Run(() => new PromptListResult());
     }
 }
