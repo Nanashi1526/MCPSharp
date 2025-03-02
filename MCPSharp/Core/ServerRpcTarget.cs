@@ -22,10 +22,10 @@ namespace MCPSharp
         [JsonRpcMethod("initialize")]
         public async Task<InitializeResult> InitializeAsync(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo)
         {
-            _clientInfo = clientInfo;
-            _clientCapabilities = capabilities;
+            _clientInfo = clientInfo ?? new();
+            _clientCapabilities = capabilities ?? new();
 
-            if (capabilities.Tools.TryGetValue("listChanged", out bool value))
+            if (_clientCapabilities.Tools.TryGetValue("listChanged", out bool value))
             {
                 MCPServer.EnableToolChangeNotification = value;
             }
