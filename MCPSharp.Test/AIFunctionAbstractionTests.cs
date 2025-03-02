@@ -14,7 +14,7 @@ namespace MCPSharp.Test
         [ClassInitialize]
         public static async Task ClassInitialize(TestContext context)
         {
-            client = new("Test Client", "1.0.0", "MCPSharp.Example.exe");
+            client = new("Test Client", "1.0.0", "dotnet", "MCPSharp.Example.dll");
             functions = await client.GetFunctionsAsync();
         }
 
