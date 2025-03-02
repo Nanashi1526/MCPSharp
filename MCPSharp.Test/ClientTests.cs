@@ -8,7 +8,7 @@
         [ClassInitialize]
         public static void ClassInitialize(TestContext context) 
         {
-            client = new("Test Client", "1.0.0", "C:\\Program Files\\nodejs\\npx.cmd", "-y @modelcontextprotocol/server-everything");
+            client = new("Test Client", "1.0.0", "npx", "-y @modelcontextprotocol/server-everything");
             client.GetPermission = (Dictionary<string, object> parameters) =>
             {
 

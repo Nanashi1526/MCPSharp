@@ -30,12 +30,10 @@
             });
         }
 
-      
-        [McpTool("test", "testing tool")]
         public class TestTool
         {
-            [McpFunction("test", "test function")]
-            public async Task<string> TestFunction() => await Task.FromResult("test");
+            [McpTool("test", "test function")] 
+            public async Task<string> TestFunctionAsync() => await Task.FromResult("test");
         }
 
        
