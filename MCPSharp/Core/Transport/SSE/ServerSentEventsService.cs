@@ -2,7 +2,7 @@
 
 namespace MCPSharp.Core.Transport.SSE
 {
-    // Add this class to handle SSE connections and broadcasting
+    
     public class ServerSentEventsService
     {
         private readonly List<(SseClient Client, MCPServer Instance)> _clients = [];

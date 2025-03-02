@@ -1,15 +1,19 @@
-﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
-using System.Text.Json.Serialization;
-
-namespace MCPSharp.Model.Content
+﻿namespace MCPSharp.Model.Content
 {
-    public class TextContent
+    /// <summary>
+    /// This is the basic text object for a message
+    /// </summary>
+    public class TextContent(string text = null)
     {
-        [JsonPropertyName("text")]
-        public string Text { get; set; }
-        [JsonPropertyName("type")]
-        public string Type { get; set; } = "text";
+        /// <summary>
+        /// The text of the message
+        /// </summary>
+        public string Text { get; set; } = text;
+
+        /// <summary>
+        /// The type of the content. This is always "text"
+        /// </summary>
+        public const string Type = "text";
     }
 }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+

@@ -9,6 +9,11 @@
         public static void ClassInitialize(TestContext context) 
         {
             client = new("Test Client", "1.0.0", "C:\\Program Files\\nodejs\\npx.cmd", "-y @modelcontextprotocol/server-everything");
+            client.GetPermission = (Dictionary<string, object> parameters) =>
+            {
+
+                return true;
+            };
         } 
 
 
@@ -34,6 +39,7 @@
         [TestMethod("Client - Tools/Call")]
         public async Task TestCallTool()
         {
+            
             var result = await client.CallToolAsync("echo", new Dictionary<string, object> { { "message", "test" } });
 
             string response = result.Content[0].Text;

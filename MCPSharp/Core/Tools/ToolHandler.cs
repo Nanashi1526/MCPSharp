@@ -15,20 +15,36 @@ namespace MCPSharp.Core.Tools
         {
             try
             {
+                
                 var inputValues = new Dictionary<string, object>();
-
-                foreach (var item in parameters)
+                foreach (var par in _method.GetParameters())
                 {
-                    if (item.Value is JsonElement jsonElement)
-                    {
-                        var val = JsonSerializer.Deserialize(jsonElement.GetRawText()!,
-                            _method.GetParameters().FirstOrDefault(p => p.Name == item.Key)!.ParameterType!)!;
+                    if (parameters.TryGetValue(par.Name, out var value)) {
+                        if (value is JsonElement element)
+                        {
+                            value = JsonSerializer.Deserialize(element.GetRawText(), par.ParameterType);
+                        }
 
-                        inputValues.Add(item.Key, val);
+                        inputValues.Add(par.Name, value);
+                    }
+                    else
+                    {
+                        inputValues.Add(par.Name, par.ParameterType.IsValueType ? Activator.CreateInstance(par.ParameterType) : null);
                     }
                 }
 
-                var result = _method.Invoke(Activator.CreateInstance(_method.DeclaringType), [.. inputValues.Values]);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return new CallToolResult { IsError = true, Content = [new TextContent("Operation was cancelled")] };
+                }
+
+                var result = _method.Invoke(Activator.CreateInstance(_method.DeclaringType),[.. inputValues.Values]);
+
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return new CallToolResult { IsError = true, Content = [new TextContent("Operation was cancelled")] };
+                }
 
                 if (result is Task task)
                 {
@@ -37,10 +53,23 @@ namespace MCPSharp.Core.Tools
                     result = resultProperty?.GetValue(task);
                 }
 
-                return new CallToolResult
+                if (result is string resultString)
+                    return new CallToolResult { Content = [new (resultString)]};
+                
+                if (result is string[] resultStringArray)
+                    return new CallToolResult { Content = [.. resultStringArray.Select(s => new TextContent(s))] };
+
+                if (result is null)
                 {
-                    Content = [new TextContent { Type = "text", Text = result?.ToString() ?? "no response" }]
-                };
+                    return new CallToolResult { IsError = true, Content = [new("null")] };
+                }
+
+                if (result is JsonElement jsonElement)
+                {
+                    return new CallToolResult { Content = [new(jsonElement.GetRawText())] };
+                }   
+
+                else return new CallToolResult { Content = [new(result.ToString())] };
             }
             catch (Exception ex)
             {

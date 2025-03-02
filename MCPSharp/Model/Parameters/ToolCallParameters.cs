@@ -1,19 +1,26 @@
-﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace MCPSharp.Model.Parameters
 {
+    /// <summary>
+    /// Represents the parameters for a tool call.
+    /// </summary>
     public class ToolCallParameters
     {
-        [JsonPropertyName("name")]
+        /// <summary>
+        /// The name of the tool being called
+        /// </summary>
         public string Name { get; set; } = "";
 
-        [JsonPropertyName("arguments")]
+        /// <summary>
+        /// the arguments supplied to the tool
+        /// </summary>
         public Dictionary<string, object> Arguments { get; set; } = [];
 
+        /// <summary>
+        /// metadata
+        /// </summary>
         [JsonPropertyName("_meta")]
         public MetaData Meta { get; set; } = new();
     }
 }
-
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

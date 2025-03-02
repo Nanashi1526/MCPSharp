@@ -1,28 +1,34 @@
 ﻿using MCPSharp.Core.Transport;
-using MCPSharp.Core.Transport.SSE;
 using MCPSharp.Model;
 using MCPSharp.Model.Parameters;
 using MCPSharp.Model.Results;
+using Microsoft.Extensions.AI;
 using StreamJsonRpc;
 using System.Diagnostics;
 
-using System.Net.Http.Headers;
-
 namespace MCPSharp
 {
+
     /// <summary>
     /// MCPSharp Model Context Protocol Client.
     /// </summary>
     public class MCPClient : IDisposable
     {
+        /// <summary>
+        /// Gets or sets the function that determines whether the client has permission to call a tool with the specified parameters.
+        /// </summary>
+        public Func <Dictionary<string, object>, bool> GetPermission = (parameters) => true;
+
         private readonly string _name;
         private readonly string _version;
         private readonly Process _process;
-        private JsonRpc _rpc;
+        private readonly JsonRpc _rpc;
+
+        /// <summary>
+        /// Gets a value indicating whether the client has been initialized.
+        /// </summary>
         public bool Initialized { get; private set; } = false;
 
-        private HttpClient _httpClient;
-        private Stream _stream;
         /// <summary>
         /// The tools that have been registered with the client.
         /// </summary>
@@ -34,36 +40,51 @@ namespace MCPSharp
         /// <param name="name">The name of the client.</param>
         /// <param name="version">The version of the client.</param>
         /// <param name="server">The path to the executable server.</param>
+        /// <param name="env">Dictionary containing enviroment variables
         /// <param name="args">Additional arguments for the server.</param>
-        public MCPClient(string name, string version, string server, params string[] args)
+        public MCPClient(string name, string version, string server, string args = null, IDictionary<string, string> env =null)
         {
+
+            ProcessStartInfo startInfo = new(server, args)
+            {
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+
+
+            foreach (var envvar in env?? new Dictionary<string,string>())
+            {
+                startInfo.EnvironmentVariables.Add(envvar.Key, envvar.Value);
+            }
+
             _name = name;
             _version = version;
             _process = new()
             {
-                StartInfo = new()
-                {
-                    FileName = server,
-                    Arguments = string.Join(" ", args),
-                    UseShellExecute = false,
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
+                StartInfo = startInfo
             };
             _process.Start();
+
             var pipe = new DuplexPipe(_process.StandardOutput.BaseStream, _process.StandardInput.BaseStream);
-            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter()), this);
+            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(pipe, new SystemTextJsonFormatter() { 
+                JsonSerializerOptions = new System.Text.Json.JsonSerializerOptions { 
+                    PropertyNameCaseInsensitive = true, 
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                } }), this);
             _rpc.StartListening();
 
-            _ = _rpc.InvokeAsync<InitializeResult>(
-                    "initialize", 
+            _ = _rpc.InvokeAsync<InitializeResult>("initialize", 
                     [
                         "2024-11-05", 
                         new { 
                             roots = new { listChanged = false }, 
-                            sampling = new { } }, 
+                            sampling = new { }, 
+                            tools = new { listChanged = true } 
+                        },
+                            
                         new { 
                             name = _name, 
                             version = _version }
@@ -73,79 +94,42 @@ namespace MCPSharp
             _ = GetToolsAsync();
         }
 
-        public MCPClient(Uri address, string name, string version)
-        {
-            _name = name;
-            _version = version;
-            _httpClient = new HttpClient();
-            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(
-                new DuplexPipe(_httpClient.GetStreamAsync(address).Result, 
-                new HttpPostStream(address.ToString())), new SystemTextJsonFormatter()));
-            _rpc.StartListening();
-            var result = _rpc.InvokeAsync<InitializeResult>(
-                 "initialize",
-                 [
-                     "2024-11-05",
-                        new {
-                            roots = new { listChanged = false },
-                            sampling = new { } },
-                        new {
-                            name = _name,
-                            version = _version }
-                 ]);
-            result.Wait();
-         
-
-            _ = _rpc.NotifyAsync("notifications/initialized");
-            Initialized = true;
-        }
         /// <summary>
-        /// resets the connection to an SSE connection 
+        /// MCP standard ping function
         /// </summary>
-        /// <param name="address"></param>
-        /// <param name="port"></param>
         /// <returns></returns>
-        public async Task InitializeSseAsync(string address = "localhost", int port = 8080)
+        [JsonRpcMethod("ping")]
+        public async Task<object> RecievePingAsync() => await Task.FromResult<object>(new());
+
+
+        /// <summary>
+        /// MCP tools list changed notification
+        /// </summary>
+        /// <returns></returns>
+        [JsonRpcMethod("notifications/tools/list_changed")]
+        public async Task ToolsListChangedAsync() => await GetToolsAsync();
+
+
+
+        /// <summary>
+        /// Expose tools as Microsoft.Extensions.AI AIFunctions
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IList<AIFunction>> GetFunctionsAsync()  
         {
+            List<AIFunction> functions = []; 
 
-            _httpClient?.Dispose();
-            _httpClient = new HttpClient();
+            await GetToolsAsync();
 
-            // Configure request with proper headers
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"http://{address}:{port}/sse");
+            foreach (var tool in Tools)
+            {
+                MCPFunction function = new(tool, this); 
+                functions.Add(function);
+            }
 
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-            //EventSource eventSource = new EventSource($"http://{address}:{port}/sse");
-            //eventSource.MessageReceived += (sender, e) => Console.WriteLine(e.Message.Data);
-
-            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead);
-            response.EnsureSuccessStatusCode();
-
-            _stream = await response.Content.ReadAsStreamAsync();
-
-            _rpc?.Dispose();
-
-            _rpc = new JsonRpc(new NewLineDelimitedMessageHandler(
-                new DuplexPipe(_stream, new HttpPostStream($"http://{address}:{port}/messages")),
-                new SystemTextJsonFormatter()));
-
-            _rpc.StartListening();
-            _ = _rpc.InvokeAsync<InitializeResult>(
-                 "initialize",
-                 [
-                     "2024-11-05",
-                        new {
-                            roots = new { listChanged = false },
-                            sampling = new { } },
-                        new {
-                            name = _name,
-                            version = _version }
-                 ]);
-
-            _ = _rpc.NotifyAsync("notifications/initialized");
-            Initialized = true;
+            return functions;
         }
+
 
         /// <summary>
         /// Gets a list of tools from the MCP server.
@@ -163,8 +147,19 @@ namespace MCPSharp
         /// <param name="name">The name of the tool to call.</param>
         /// <param name="parameters">The parameters to pass to the tool.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the result of the tool call.</returns>
-        public async Task<CallToolResult> CallToolAsync(string name, Dictionary<string, object> parameters) =>
-            await _rpc.InvokeWithParameterObjectAsync<CallToolResult>("tools/call", new ToolCallParameters { Arguments = parameters, Name = name });
+        public async Task<CallToolResult> CallToolAsync(string name, Dictionary<string, object> parameters)
+        {
+            if (!GetPermission(new Dictionary<string, object> { ["tool"] = name, ["parameters"] = parameters }))
+                return new CallToolResult() { 
+                    IsError = true, 
+                    Content = [new Model.Content.TextContent() { 
+                        Text = "Permission Denied." }] 
+                };
+                
+            return await _rpc.InvokeWithParameterObjectAsync<CallToolResult>(
+                "tools/call", new ToolCallParameters { Arguments = parameters, Name = name });
+        }
+        
 
         /// <summary>
         /// Calls a tool with the given name.
@@ -189,7 +184,7 @@ namespace MCPSharp
         /// Pings the MCP server.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the ping response.</returns>
-        public async Task<object> PingAsync() => await _rpc.InvokeWithParameterObjectAsync<object>("ping");
+        public async Task<object> SendPingAsync() => await _rpc.InvokeWithParameterObjectAsync<object>("ping");
 
         /// <summary>
         /// Gets a list of prompts from the MCP server.
@@ -202,6 +197,7 @@ namespace MCPSharp
         /// </summary>
         public void Dispose()
         {
+            _rpc.DispatchCompletion.Wait();
             _rpc.Dispose();
 
             _process.Kill();

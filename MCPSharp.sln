@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp", "MCPSharp\MCPSha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.Test", "MCPSharp.Test\MCPSharp.Test.csproj", "{EAAC2C18-8A35-4CED-B407-582170A7A0F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.ExternalExample", "MCPSharp.ExternalExample\MCPSharp.ExternalExample.csproj", "{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPSharp.Example.Import", "MCPSharp.ExternalExample\MCPSharp.Example.Import.csproj", "{6B4E00C3-6CAF-4493-9A4D-9AE602FA9E00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

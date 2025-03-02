@@ -5,7 +5,7 @@ namespace MCPSharp.Test
     [TestClass]
     public sealed class STDIOTransportTests
     {
-        private readonly static MCPClient client = new("Test Client", "1.0.0", "MCPSharp.Example.exe");
+        private readonly static MCPClient client = new("Test Client", "1.0.0", "dotnet", "MCPSharp.Example.dll");
 
         [ClassCleanup]
         public static void ClassCleanup() { client?.Dispose(); }
@@ -58,6 +58,7 @@ namespace MCPSharp.Test
         public async Task TestCallToolWithParameters()
         {
             var result = await client.CallToolAsync("Echo", new Dictionary<string, object> { { "input", "this is a test of the echo function" } });
+            Assert.IsFalse(result.IsError);
             string response = result.Content[0].Text;
             Assert.AreEqual("this is a test of the echo function", response);
         }
@@ -108,7 +109,7 @@ namespace MCPSharp.Test
         [TestMethod("Test Ping")]
         public async Task TestPing()
         {
-            await client.PingAsync();
+            await client.SendPingAsync();
         }
 
         [TestCategory("Resources")]
