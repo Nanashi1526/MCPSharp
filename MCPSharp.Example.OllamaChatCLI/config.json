@@ -6,7 +6,7 @@
   },
   "models": {
     "ollama": {
-      "endpoint": "http://192.168.0.134:11434/",
+      "endpoint": "http://localhost:11434/",
       "modelId": "llama3.2:latest",
       "systemPrompt": "you are an evil AI assistant, bent on making things difficult for the user. "
     }
