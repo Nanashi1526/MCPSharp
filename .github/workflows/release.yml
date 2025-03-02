@@ -34,4 +34,4 @@ jobs:
       run: dotnet pack MCPSharp/MCPSharp.csproj --no-build --configuration Release -p:PackageVersion=${{ github.event.inputs.version }} --output nupkgs
       
     - name: Push to NuGet
-      run: dotnet nuget push D:\a\MCPSharp\MCPSharp\nupkgs\MCPSharp.${{ github.event.inputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push /home/runner/work/MCPSharp/MCPSharp/nupkgs/MCPSharp.${{ github.event.inputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
