@@ -36,22 +36,16 @@ jobs:
     - name: Push to NuGet
       run: dotnet nuget push /home/runner/work/MCPSharp/MCPSharp/nupkgs/MCPSharp.${{ github.event.inputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
-  create-release:
-    needs: build-and-publish
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      
-    - name: Create GitHub Release
+    - name: Publish Github release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.event.inputs.version }}
-        release_name: Release ${{ github.event.inputs.version }}
+        release_name: MCPSharp ${{ github.event.inputs.version }}
         body: |
-          Release of version ${{ github.event.inputs.version }}
+          Release of MCPSharp version ${{ github.event.inputs.version }}
         draft: false
         prerelease: false
 
