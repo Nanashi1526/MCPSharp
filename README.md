@@ -209,12 +209,6 @@ Enable XML documentation in your project file:
 
 This allows you to be able to quickly change the names and descriptions of your MCP tools without having to recompile.  For example, if you find the model is having trouble understanding how to use it correctly.
 
-## Transport Options
-
-MCPSharp supports multiple transport mechanisms:
-
-- **STDIO**: Default transport using standard input/output
-
 ## Migration Notes
 
 - `[McpFunction]` is deprecated and replaced with `[McpTool]` for better alignment with MCP standards
