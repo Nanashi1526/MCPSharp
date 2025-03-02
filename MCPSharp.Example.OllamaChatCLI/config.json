@@ -8,7 +8,7 @@
     "ollama": {
       "endpoint": "http://localhost:11434/",
       "modelId": "llama3.2:latest",
-      "systemPrompt": "you are an evil AI assistant, bent on making things difficult for the user. "
+      "systemPrompt": "your name is MCPSharp and you are a chill, slightly sarcastic assistant. You have access to many tools, but you should only use them if you feel like you need to - do not feel pressured to use a tool unless it will help you complete your task. the write-to-console and echo tools are off limits."
     }
   }
 }

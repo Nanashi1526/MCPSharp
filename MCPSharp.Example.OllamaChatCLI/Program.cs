@@ -26,7 +26,7 @@ var chatOptions = new ChatOptions {
     Tools = clients.GetAllAIFunctions(),
     ToolMode = ChatToolMode.Auto //let the assistant choose not to use a tool if it doesn't need to
 };
-var chatHistory = new List<ChatMessage>() { new(ChatRole.System, "") };
+var chatHistory = new List<ChatMessage>() { new(ChatRole.System, conf.Models["ollama"].SystemPrompt) }; 
 var chatClient = new OllamaChatClient(conf.Models["ollama"].Endpoint, conf.Models["ollama"].ModelId).AsBuilder().UseFunctionInvocation().Build();
 
 while (true)
@@ -58,5 +58,6 @@ class ModelConfiguration
 {
     public string Endpoint { get; set; }
     public string ModelId { get; set; }
+    public string SystemPrompt { get; set; }
 }
 
