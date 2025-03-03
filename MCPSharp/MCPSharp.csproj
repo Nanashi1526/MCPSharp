@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
 	<LangVersion>13.0</LangVersion>	
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -96,7 +96,7 @@ await client.CallToolAsync("echo", new Dictionary&lt;string, object&gt;{{"input"
   </ItemGroup>
 
   <ItemGroup>
-	  <None Update="icon.png" Pack="true" PackagePath="\">
+	  <None Include="icon.png" Pack="true" PackagePath="\">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
   </ItemGroup>
