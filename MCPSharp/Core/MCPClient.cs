@@ -52,6 +52,7 @@ namespace MCPSharp
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
             };
 
 
@@ -62,10 +63,8 @@ namespace MCPSharp
 
             _name = name;
             _version = version;
-            _process = new()
-            {
-                StartInfo = startInfo
-            };
+
+            _process = new() { StartInfo = startInfo };
             _process.Start();
 
             var pipe = new DuplexPipe(_process.StandardOutput.BaseStream, _process.StandardInput.BaseStream);
