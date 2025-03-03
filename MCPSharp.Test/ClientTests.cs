@@ -1,4 +1,6 @@
-﻿namespace MCPSharp.Test
+﻿using System.Runtime.InteropServices;
+
+namespace MCPSharp.Test
 {
     [TestClass]
     public class ClientTests
@@ -8,12 +10,10 @@
         [ClassInitialize]
         public static void ClassInitialize(TestContext context) 
         {
-            client = new("Test Client", "1.0.0", "npx", "-y @modelcontextprotocol/server-everything");
-            client.GetPermission = (Dictionary<string, object> parameters) =>
-            {
-
-                return true;
-            };
+            client = new("Test Client", "1.0.0",
+                RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "c:\\program files\\nodejs\\npx.cmd" : "npx",
+                "-y @modelcontextprotocol/server-everything")
+            { GetPermission = (Dictionary<string, object> parameters) => { return true; } };
         } 
 
 
