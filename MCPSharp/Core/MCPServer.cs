@@ -100,10 +100,11 @@ namespace MCPSharp
                 .Where(t =>
                 {
                     bool classHasToolAttribute = t.GetCustomAttribute<McpToolAttribute>() != null;
-                    bool methodHasToolAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpFunctionAttribute>() != null);
+                    bool methodHasToolAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpToolAttribute>() != null);
+                    bool methodHasFunctionAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpFunctionAttribute>() != null);
                     bool methodHasResourceAttribute = t.GetMethods().Any(m => m.GetCustomAttribute<McpResourceAttribute>() != null);
 
-                    return classHasToolAttribute || methodHasToolAttribute || methodHasResourceAttribute;
+                    return classHasToolAttribute || methodHasToolAttribute || methodHasFunctionAttribute || methodHasResourceAttribute;
                 });
 
             foreach (var toolType in allTypes)
