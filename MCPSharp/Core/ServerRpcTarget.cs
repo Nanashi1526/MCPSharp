@@ -20,14 +20,20 @@ namespace MCPSharp
         /// <param name="clientInfo">The client information.</param>
         /// <returns>The result of the initialization process.</returns>
         [JsonRpcMethod("initialize")]
-        public async Task<InitializeResult> InitializeAsync(string protocolVersion, ClientCapabilities capabilities, Implementation clientInfo)
+        public async Task<InitializeResult> InitializeAsync(string protocolVersion, object capabilities, Implementation clientInfo)
         {
-            _clientInfo = clientInfo ?? new();
-            _clientCapabilities = capabilities ?? new();
-
-            if (_clientCapabilities.Tools.TryGetValue("listChanged", out bool value))
+            
+            if (capabilities is ClientCapabilities cc)
             {
-                MCPServer.EnableToolChangeNotification = value;
+                _clientCapabilities = cc;
+            }
+
+            _clientInfo = clientInfo ?? new();
+
+            if (_clientCapabilities.Tools.TryGetValue("listChanged", out object value))
+            {
+                if (value is bool boolValue)
+                    MCPServer.EnableToolChangeNotification = boolValue;    
             }
 
             return await Task.FromResult<InitializeResult>(
