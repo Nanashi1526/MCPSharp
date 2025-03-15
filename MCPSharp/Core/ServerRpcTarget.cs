@@ -10,7 +10,7 @@ namespace MCPSharp
     class ServerRpcTarget(ToolManager toolManager, ResourceManager resourceManager, Implementation implementation)
     {
         private Implementation _clientInfo;
-        private ClientCapabilities _clientCapabilities;
+        private ClientCapabilities _clientCapabilities = new();
 
         /// <summary>
         /// Initializes the server with the specified protocol version, client capabilities, and client information.
